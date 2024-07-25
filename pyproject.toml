@@ -1,0 +1,98 @@
+[build-system]
+requires = ["setuptools>=69.5.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "realtime-isaac-item-detector"
+version = "1.0.0"
+description = "Computer vision-powered Binding of Isaac Item Detector"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {file = "LICENSE.txt"}
+keywords = ["Computer Vision", "Binding of Isaac", "Object Detection", "pytorch"]
+
+authors = [
+    {name = "Hamza Khan"}
+]
+
+maintainers = [
+    {name = "Hamza Khan"}
+]
+
+dependencies = [
+    "requests>=2",
+    "beautifulsoup4>=4"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/khan0617/realtime-binding-of-isaac-item-detector"
+
+# Development dependencies
+# pip install -e .[lint,test]
+# pip install -e .[dev]
+[project.optional-dependencies]
+lint = [
+    # code style formatting, run like `black .`
+    "black",
+
+    # automatic sorting of imports, run like `isort .`
+    "isort"
+]
+
+test = [
+    # test execution platform
+    "pytest",
+
+    # provides test coverage % from test runs
+    "pytest-cov",
+
+    # pytest wrapper for python's unittest.mock
+    "pytest-mock"
+]
+
+dev = [
+    # python type checking, run using `mypy .` to check everything.
+    "mypy",
+
+    # types for the beautifulsoup library for mypy
+    "types-beautifulsoup4",
+
+    # types for requests library for mypy
+    "types-requests",
+
+    # actions for pre commit hooks to run formatters, linters etc.
+    # to configure the pre-commit hooks, run "pre-commit install"
+    # this will add these hooks to the local .git file.
+    "pre-commit"
+]
+
+[tool.setuptools.packages.find]
+exclude = ["test", "test.*"]
+
+[tool.black]
+line-length = 90
+
+[tool.isort]
+profile = "black"
+line_length = 90
+skip_gitignore = true
+src_paths = ["src/"]
+
+# see here for mypy pyproject.toml https://mypy.readthedocs.io/en/stable/config_file.html#using-a-pyproject-toml-file
+[tool.mypy]
+mypy_path = "./src"
+follow_imports = "silent"
+python_version = "3.11"
+warn_redundant_casts = true
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = true
+
+# Configuration for pytest
+# https://docs.pytest.org/en/latest/reference/customize.html#pyproject-toml
+[tool.pytest.ini_options]
+testpaths = ["test"]
+norecursedirs = [
+    ".vscode",
+    "__pycache__"
+]
