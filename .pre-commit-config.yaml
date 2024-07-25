@@ -16,3 +16,9 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: [types-requests, types-beautifulsoup4]
+
+  - repo: https://github.com/pylint-dev/pylint
+    rev: v3.2.6
+    hooks:
+      - id: pylint
+        args: ["--rcfile=pyproject.toml"]

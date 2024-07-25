@@ -36,7 +36,10 @@ lint = [
     "black",
 
     # automatic sorting of imports, run like `isort .`
-    "isort"
+    "isort",
+
+    # more static code linting
+    "pylint"
 ]
 
 test = [
@@ -77,6 +80,17 @@ profile = "black"
 line_length = 90
 skip_gitignore = true
 src_paths = ["src/"]
+
+[tool.pylint]
+max-line-length = 90
+min-similarity-lines = 4
+disable = [
+    "missing-module-docstring"
+]
+output-format = "colorized"
+ignore = [
+    "test"
+]
 
 # see here for mypy pyproject.toml https://mypy.readthedocs.io/en/stable/config_file.html#using-a-pyproject-toml-file
 [tool.mypy]
