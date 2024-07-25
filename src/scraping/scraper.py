@@ -6,8 +6,7 @@ from bs4 import BeautifulSoup
 
 from constants import WIKI_ITEMS_HOMEPAGE
 from logging_config import configure_logging
-
-from .isaac_item import IsaacItem
+from scraping.isaac_item import IsaacItem
 
 configure_logging()
 logger = logging.getLogger(__name__)
