@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 
 @dataclass
@@ -19,11 +19,16 @@ class IsaacItem:
     # ex: https://bindingofisaacrebirth.fandom.com/wiki/Guppy%27s_Head
     wiki_url: str
 
-    # this "description" field will store all those effects as a flattened list of strings.
-    description: list[str]
+    # this "description" field will store all description sentences as a flattened list of strings.
+    description: str
 
     # item quality can be one of [0-4] discretely. ex: Guppy's head is 2.
-    item_quality: int
+    # we'll store these as a string since it can also be empty (no quality / removed item).
+    item_quality: str
 
     # ex: "Reusable fly hive" for Guppy's Head. What you see when in-game you pick it up.
     quote: str
+
+    def to_dict(self) -> dict:
+        """Get the dictionary reprentation of the IsaacItem dataclass."""
+        return asdict(self)
