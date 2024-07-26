@@ -2,6 +2,9 @@
 requires = ["setuptools>=69.5.1"]
 build-backend = "setuptools.build_meta"
 
+# to install the whole project into site-packages (where your interpreter is)
+#   then run: pip install -e .
+#   (HIGHLY recommended within a conda env or virtual env)
 [project]
 name = "realtime-isaac-item-detector"
 version = "1.0.0"
@@ -70,19 +73,20 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
+where = ["src"]
 exclude = ["test", "test.*"]
 
 [tool.black]
-line-length = 90
+line-length = 120
 
 [tool.isort]
 profile = "black"
-line_length = 90
+line_length = 120
 skip_gitignore = true
 src_paths = ["src/"]
 
 [tool.pylint]
-max-line-length = 90
+max-line-length = 120
 min-similarity-lines = 4
 disable = [
     "missing-module-docstring"
