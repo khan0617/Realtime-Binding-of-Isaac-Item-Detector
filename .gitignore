@@ -1,5 +1,6 @@
 # ignore the cached html pages
 scraper_cache/
+data/
 
 # below is the github recommended python .gitignore (above is my additions)
 # Byte-compiled / optimized / DLL files
