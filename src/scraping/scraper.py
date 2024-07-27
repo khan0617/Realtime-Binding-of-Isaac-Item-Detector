@@ -9,7 +9,16 @@ import requests
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 
-from constants import CACHE_DIR, CACHE_FILE, DATA_DIR, JSON_DUMP_FILE, WIKI_HOMEPAGE_ROOT, WIKI_ITEMS_HOMEPAGE
+from constants import (
+    BROKEN_SHOVEL_ACTIVE_ID,
+    BROKEN_SHOVEL_PASSIVE_ID,
+    CACHE_DIR,
+    CACHE_FILE,
+    DATA_DIR,
+    JSON_DUMP_FILE,
+    WIKI_HOMEPAGE_ROOT,
+    WIKI_ITEMS_HOMEPAGE,
+)
 from logging_config import configure_logging
 from scraping.isaac_item import IsaacItem
 
@@ -83,7 +92,7 @@ class Scraper:
             logger.error("fetch_page: Failed to retrieve page for url %s, err: %s", url, str(e))
             return None
 
-    @typing.no_type_check  # mypy gets upset with all the html stuff, don't want tons of None checks.
+    @typing.no_type_check  # mypy gets upset with all the html stuff, don't want to add tons of `None` checks.
     @staticmethod
     def parse_isaac_items_from_html(html: str) -> list[IsaacItem]:
         """Parses IsaacItem objects from the HTML content.
@@ -138,10 +147,16 @@ class Scraper:
             # EDGE CASE! There are two "Broken Shovel" items. ID 5.100.550 is the "Active" one, the first piece.
             # Item ID 5.100.551 is the 2nd broken shovel piece, the passive collectible.
             # we need to account for these here.
-            if item_id == "5.100.550":
+            if item_id == BROKEN_SHOVEL_ACTIVE_ID:
                 name = "Broken Shovel (Active)"
-            elif item_id == "5.100.551":
+            elif item_id == BROKEN_SHOVEL_PASSIVE_ID:
                 name = "Broken Shovel (Passive)"
+
+            if item_id in [BROKEN_SHOVEL_PASSIVE_ID, BROKEN_SHOVEL_ACTIVE_ID]:
+                # doing this lets us have 2 unique dirs for the broken shovel items
+                img_dir = name
+            else:
+                img_dir = url_encoded_name
 
             isaac_items.append(
                 IsaacItem(
@@ -153,6 +168,7 @@ class Scraper:
                     item_quality=item_quality,
                     quote=quote,
                     url_encoded_name=url_encoded_name,
+                    img_dir=img_dir,
                 )
             )
 
@@ -173,15 +189,8 @@ class Scraper:
             isaac_item (IsaacItem): The IsaacItem we want to download an image for.
             save_dir (str): The root directory where the image will be saved.
         """
-        # Again, the Broken Shovel items have the same wiki URL so we can't use that as a unique identifier.
-        # Rather, I store their names uniquely.
-        if "Broken Shovel" in isaac_item.name:
-            name = isaac_item.name
-        else:
-            name = isaac_item.url_encoded_name
-
         # define the directory and file path using the encoded name
-        item_dir = os.path.join(save_dir, name)
+        item_dir = os.path.join(save_dir, isaac_item.img_dir)
         save_path = os.path.join(item_dir, "original_img.png")
 
         # make sure the destination directory exists
@@ -193,7 +202,7 @@ class Scraper:
             return
 
         try:
-            # Download the image then save it as it streams in as chunks
+            # download the image then save it as it streams in as chunks
             response = requests.get(isaac_item.img_url, timeout=10, stream=True)
             response.raise_for_status()
             with open(save_path, "wb") as f:
@@ -205,7 +214,7 @@ class Scraper:
 
     @staticmethod
     def download_item_images(isaac_items: list[IsaacItem], save_dir: str, parallel: bool = True) -> None:
-        """Downloads images for all provided IsaacItems in parallel.
+        """Downloads images for all provided IsaacItems.
 
         Args:
             isaac_items (List[IsaacItem]): A list of IsaacItems.
@@ -248,10 +257,8 @@ class Scraper:
     def dump_item_data_to_json(isaac_items: list[IsaacItem], filename: str) -> None:
         """Write the dictionary representation for each item into the specified filename.
 
-        In the JSON file, each object is represented as:
-        <url_encoded_name>: {... the rest of the object ...}
-        Edge case: There are 2 "Broken Shovel" items, both with the same URL.
-        For those items, the main JSON key will be their regular name, like "Broken Shovel (Active)".
+        In the JSON file, each object is represented as follows.
+        `<img_dir>: {... the rest of the object ...}`
 
         Args:
             isaac_items (list[IsaacItem]): The IsaacItems to dump to the file.
@@ -261,14 +268,8 @@ class Scraper:
             data = {}
             for item in isaac_items:
                 item_as_dict: dict[str, str] = item.to_dict()
-                if item.url_encoded_name == "Broken_Shovel":
-                    # edge case: There are two links ending in "/wiki/Broken_Shovel".
-                    # so for these 2 items only, need to use their name as the key.
-                    name = item_as_dict.pop("name")
-                    data[name] = item_as_dict
-                else:
-                    url_encoded_name = item_as_dict.pop("url_encoded_name")
-                    data[url_encoded_name] = item_as_dict
+                img_dir = item_as_dict.pop("img_dir")
+                data[img_dir] = item_as_dict
 
             json.dump(data, f, indent=4)
             logger.info("dump_item_data_to_json: Successfully created %s", filename)
@@ -277,7 +278,8 @@ class Scraper:
     def get_isaac_items_from_json(filename: str) -> list[IsaacItem] | None:
         """Attempt to parse IsaacItems from the provided json filename.
 
-        Isaac items should be stored in the following example format (item's url_encoded_name is the main key):
+        Isaac items should be stored in the following example format (item's img_dir is the main key):
+
         "Ventricle_Razor": {
             "name": "Ventricle Razor",
             "item_id": "5.100.396",
@@ -285,7 +287,8 @@ class Scraper:
             "wiki_url": "https://bindingofisaacrebirth.fandom.com/wiki/Ventricle_Razor",
             "description": "Creates up to two portals that remain even if Isaac leaves the room. Upon entering a portal, Isaac is teleported to the other portal.",
             "item_quality": "1",
-            "quote": "Short cutter"
+            "quote": "Short cutter",
+            "url_encoded_name": "Ventricle_Razor"
         },
 
         Args:
@@ -298,14 +301,13 @@ class Scraper:
             isaac_items = []
             with open(filename, "r", encoding="utf-8") as f:
                 data: dict[str, dict[str, str]] = json.load(f)
-                for identifier, item_data in data.items():
-                    # The Broken Shovels are loaded into JSON via their name, not the url_encoded_name
-                    if "Broken Shovel" in identifier:
-                        item_data.update({"name": identifier})
-                        isaac_items.append(IsaacItem.from_dict(item_data))
-                    else:
-                        item_data.update({"url_encoded_name": identifier})
-                        isaac_items.append(IsaacItem.from_dict(item_data))
+
+                # add the img_dir key back into the dict then create an isaac item.
+                for img_dir, item_data in data.items():
+                    item_data.update({"img_dir": img_dir})
+                    isaac_items.append(IsaacItem.from_dict(item_data))
+
+                logger.info("get_isaac_items_from_json: Parsed %d IsaacItems from %s", len(isaac_items), filename)
                 return isaac_items
         except Exception as e:  # pylint: disable=broad-exception-caught
             logger.error("get_isaac_items_from_json: Failed to file %s: %s", filename, str(e))
@@ -313,17 +315,20 @@ class Scraper:
 
 
 def main() -> None:  # pylint: disable=missing-function-docstring
-    # First, let's fetch the HTML, parse it, and see the first and last item.
+    # first, let's fetch the HTML and parse it
     # the first item should be "A Pony" and last "Tonsil" as of 7/25/2024 on the wiki.
     html = Scraper.fetch_page(WIKI_ITEMS_HOMEPAGE)
     isaac_items = Scraper.parse_isaac_items_from_html(html)
     Scraper.download_item_images(isaac_items, DATA_DIR)
+    print(f"1st IsaacItem: {isaac_items[0].name}, last IsaacItem: {isaac_items[-1].name}")
+
+    # save the isaac items to a json file like this
     Scraper.dump_item_data_to_json(isaac_items, JSON_DUMP_FILE)
 
-    # now that we've downloaded the images, we could also do this in the future:
+    # since we've dumped to json, we can also load items in from json like this
     isaac_items_from_json = Scraper.get_isaac_items_from_json(JSON_DUMP_FILE)
 
-    # we can even compare the two lists and make sure they're the same after sorting.
+    # we can even compare the two lists and make sure they're the same after sorting
     if isaac_items_from_json is not None:
         isaac_items_from_json.sort(key=lambda x: x.name)
         isaac_items.sort(key=lambda x: x.name)
