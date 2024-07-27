@@ -134,7 +134,10 @@ class Scraper:
 
             # item description
             desc_td = all_tds[4]
-            description = " ".join(desc_td.stripped_strings)  # this deals w/ nested links and multiple parts
+
+            # this deals w/ nested links and extra spaces in the string
+            # maybe not efficient but more readable than regex...
+            description = " ".join(desc_td.stripped_strings).replace(" ,", ",").replace(" .", ".").replace(" )", ")")
 
             # item quality
             item_quality_td = all_tds[5]
