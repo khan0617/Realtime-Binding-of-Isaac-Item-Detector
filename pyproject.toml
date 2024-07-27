@@ -24,7 +24,10 @@ maintainers = [
 
 dependencies = [
     "requests>=2",
-    "beautifulsoup4>=4"
+    "beautifulsoup4>=4",
+    "opencv-python>=4.10",
+    "numpy>=2.0.1",
+    "pillow>=10.4"
 ]
 
 [project.urls]
