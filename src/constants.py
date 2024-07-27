@@ -6,3 +6,4 @@ WIKI_ITEMS_HOMEPAGE = "https://bindingofisaacrebirth.fandom.com/wiki/Items"
 CACHE_DIR = "scraper_cache"
 CACHE_FILE = os.path.join(CACHE_DIR, "cache.json")
 DATA_DIR = "data"
+JSON_DUMP_FILE = "dumped_isaac_items.json"

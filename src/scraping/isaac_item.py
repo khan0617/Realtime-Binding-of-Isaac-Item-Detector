@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import asdict, dataclass
 
 
@@ -29,6 +31,16 @@ class IsaacItem:
     # ex: "Reusable fly hive" for Guppy's Head. What you see when in-game you pick it up.
     quote: str
 
+    # Each item has a unique wiki URL, this is the end of that URL. ex for "???'s Only Friend":
+    # "%3F%3F%3F%27s_Only_Friend"
+    # this should be unique to the item. so we can use it as a key for json / directories etc.
+    url_encoded_name: str
+
     def to_dict(self) -> dict:
         """Get the dictionary reprentation of the IsaacItem dataclass."""
         return asdict(self)
+
+    @classmethod
+    def from_dict(cls, d: dict[str, str]) -> IsaacItem:
+        """Build an IsaacItem from the provided dictionary."""
+        return cls(**d)

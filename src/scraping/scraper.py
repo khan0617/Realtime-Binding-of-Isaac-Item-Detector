@@ -1,18 +1,15 @@
 import json
 import logging
 import os
-import re
-import shutil
 import typing
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor
-from pprint import pprint
 
 import requests
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 
-from constants import CACHE_DIR, CACHE_FILE, DATA_DIR, WIKI_HOMEPAGE_ROOT, WIKI_ITEMS_HOMEPAGE
+from constants import CACHE_DIR, CACHE_FILE, DATA_DIR, JSON_DUMP_FILE, WIKI_HOMEPAGE_ROOT, WIKI_ITEMS_HOMEPAGE
 from logging_config import configure_logging
 from scraping.isaac_item import IsaacItem
 
@@ -29,21 +26,18 @@ class Scraper:
         pass
 
     @staticmethod
-    def sanitize_filename(name: str) -> str:
+    def get_encoded_name_from_url(url: str) -> str:
         """
-        Sanitizes the item name to be used as a valid filename.
+        Extracts the URL-encoded name from a wiki URL.
 
         Args:
-            name (str): The item name to sanitize.
+            url (str): The URL of the wiki page.
 
         Returns:
-            str: The sanitized filename.
+            str: The URL-encoded item name.
         """
-        # URL encode the item name, including '/' and '.' as unsafe
-        encoded_name = urllib.parse.quote(name, safe="")
-
-        # replace the periods with %2E explicitly
-        encoded_name = encoded_name.replace(".", "%2E")
+        path = urllib.parse.urlparse(url).path
+        encoded_name = path.split("/")[-1]
         return encoded_name
 
     @staticmethod
@@ -137,15 +131,28 @@ class Scraper:
             item_quality_td = all_tds[5]
             item_quality = item_quality_td.text.strip()
 
+            # get the wiki_url and url_encoded_name from our parsed data
+            wiki_url = urllib.parse.urljoin(WIKI_HOMEPAGE_ROOT, relative_wiki_url)
+            url_encoded_name = Scraper.get_encoded_name_from_url(wiki_url)
+
+            # EDGE CASE! There are two "Broken Shovel" items. ID 5.100.550 is the "Active" one, the first piece.
+            # Item ID 5.100.551 is the 2nd broken shovel piece, the passive collectible.
+            # we need to account for these here.
+            if item_id == "5.100.550":
+                name = "Broken Shovel (Active)"
+            elif item_id == "5.100.551":
+                name = "Broken Shovel (Passive)"
+
             isaac_items.append(
                 IsaacItem(
                     name=name,
                     item_id=item_id,
                     img_url=img_url,
-                    wiki_url=urllib.parse.urljoin(WIKI_HOMEPAGE_ROOT, relative_wiki_url),
+                    wiki_url=wiki_url,
                     description=description,
                     item_quality=item_quality,
                     quote=quote,
+                    url_encoded_name=url_encoded_name,
                 )
             )
 
@@ -161,93 +168,60 @@ class Scraper:
 
         All item images will be downloaded into {save_dir}/{item_name}/original_img.png
         For example, the image for "Guppy's Head" will be like: {save_dir}/Guppy's Head/original_img.png
-        Item names with characters that cannot be in filepaths, such as "?", ".", "/", "<" etc are
-        encoded using urllib.quote().
 
         Args:
             isaac_item (IsaacItem): The IsaacItem we want to download an image for.
             save_dir (str): The root directory where the image will be saved.
         """
-        try:
-            # try to use the original item name first
-            item_name = isaac_item.name
-            item_dir = os.path.join(save_dir, item_name)
-            save_path = os.path.join(item_dir, "original_img.png")
+        # Again, the Broken Shovel items have the same wiki URL so we can't use that as a unique identifier.
+        # Rather, I store their names uniquely.
+        if "Broken Shovel" in isaac_item.name:
+            name = isaac_item.name
+        else:
+            name = isaac_item.url_encoded_name
 
-            # make sure the directory exists
-            os.makedirs(item_dir, exist_ok=True)
+        # define the directory and file path using the encoded name
+        item_dir = os.path.join(save_dir, name)
+        save_path = os.path.join(item_dir, "original_img.png")
 
-        except OSError:
-            # when OSError occurs, fallback to using URL-encoded name
-            logger.warning("Falling back to URL-encoded name for item: %s", isaac_item.name)
-            sanitized_name = Scraper.sanitize_filename(isaac_item.name)
-            item_dir = os.path.join(save_dir, sanitized_name)
-            save_path = os.path.join(item_dir, "original_img.png")
-            os.makedirs(item_dir, exist_ok=True)
+        # make sure the destination directory exists
+        os.makedirs(item_dir, exist_ok=True)
 
-        # If we the path exists we already have the image, don't need to download!
+        # if the path exists, we already have the image, don't need to download!
         if os.path.exists(save_path):
             logger.info("Image for %s already exists at %s", isaac_item.name, save_path)
             return
 
         try:
-            # download the image
+            # Download the image then save it as it streams in as chunks
             response = requests.get(isaac_item.img_url, timeout=10, stream=True)
             response.raise_for_status()
-
-            # save the image in chunks
             with open(save_path, "wb") as f:
                 for chunk in response.iter_content(1024):
                     f.write(chunk)
             logger.info("Saved image for %s at %s", isaac_item.name, save_path)
-        except requests.RequestException as e:
+        except (requests.RequestException, Exception) as e:  # pylint: disable=broad-exception-caught
             logger.error("Failed to download image for %s! %s", isaac_item.name, str(e))
 
     @staticmethod
-    def download_item_images(isaac_items: list[IsaacItem], save_dir: str, max_workers: int = 10) -> None:
+    def download_item_images(isaac_items: list[IsaacItem], save_dir: str, parallel: bool = True) -> None:
         """Downloads images for all provided IsaacItems in parallel.
 
         Args:
             isaac_items (List[IsaacItem]): A list of IsaacItems.
             save_dir (str): The directory where images will be saved.
-            max_workers (int): The maximum number of threads to use for parallel downloading.
+            parallel (bool): If true, parallelize the downloads, else do them sequentially.
         """
         os.makedirs(save_dir, exist_ok=True)
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            executor.map(lambda item: Scraper._download_item_image(item, save_dir), isaac_items)
+        if parallel:
+            with ThreadPoolExecutor(max_workers=10) as executor:
+                executor.map(lambda item: Scraper._download_item_image(item, save_dir), isaac_items)
+        else:
+            for item in isaac_items:
+                Scraper._download_item_image(item, save_dir)
 
     @staticmethod
-    def reorganize_downloaded_images(data_dir: str) -> None:
-        """Helper method to cleanup my (incorrectly) downloaded images (lol).
-
-        Basically, instead of downloading images like {data_dir}/Guppy's Head/original_img.jpg,
-        I downloaded them as {data_dir}/Guppy's Head.png. This method cleans it up.
-        Probably only need to run once.
-
-        Args:
-            data_dir (str): The current root dir where all images are stored.
-        """
-        moved_any_file = False
-
-        for filename in os.listdir(data_dir):
-            if filename.endswith(".png"):
-                # create a directory for the new item
-                item_name = os.path.splitext(filename)[0]
-                item_dir = os.path.join(data_dir, item_name)
-                os.makedirs(item_dir, exist_ok=True)
-
-                # define the new filepath then move the image
-                new_path = os.path.join(item_dir, "original_img.png")
-                original_path = os.path.join(data_dir, filename)
-                shutil.move(original_path, new_path)
-                logger.info("reorganize_downloaded_images: Moved %s to %s", original_path, new_path)
-                moved_any_file = True
-
-        if not moved_any_file:
-            logger.info("reorganize_downloaded_images: No images to reorganize!")
-
-    @staticmethod
-    def find_imgs_that_failed_to_download(isaac_items: list[IsaacItem], data_dir: str) -> list[IsaacItem]:
+    def _find_imgs_that_failed_to_download(isaac_items: list[IsaacItem], data_dir: str) -> list[IsaacItem]:
         """Compare the data_dir and isaac_items and and get a list of which images failed to download.
 
         This method assumes that data_dir organizes item images as follows: {data_dir}/{item_name}/original_img.png.
@@ -265,48 +239,95 @@ class Scraper:
         files = set(os.listdir(data_dir))
         missing_items = []
         for item in isaac_items:
-            if item.name not in files and urllib.parse.quote(item.name, safe="") not in files:
+            if item.name not in files and item.url_encoded_name not in files:
                 missing_items.append(item)
         logger.info("find_imgs_that_failed_to_download: found %d missing images!", len(missing_items))
         return missing_items
 
     @staticmethod
-    def download_missing_items(missing_items: list[IsaacItem], save_dir: str) -> None:
-        """Attempt to download each of the missing items.
+    def dump_item_data_to_json(isaac_items: list[IsaacItem], filename: str) -> None:
+        """Write the dictionary representation for each item into the specified filename.
+
+        In the JSON file, each object is represented as:
+        <url_encoded_name>: {... the rest of the object ...}
+        Edge case: There are 2 "Broken Shovel" items, both with the same URL.
+        For those items, the main JSON key will be their regular name, like "Broken Shovel (Active)".
 
         Args:
-            missing_items (list[IsaacItem]): The IsaacItems with no downloaded image.
-            save_dir: The root directory to downloaded the image in.
+            isaac_items (list[IsaacItem]): The IsaacItems to dump to the file.
+            filename (str): Where to save the json file.
         """
-        if not missing_items:
-            logging.info("download_missing_items: No missing items! All good :)")
-        for item in missing_items:
-            logger.info("download_missing_items: Trying to download %s", item.name)
-            Scraper._download_item_image(item, save_dir)
+        with open(filename, "w", encoding="utf-8") as f:
+            data = {}
+            for item in isaac_items:
+                item_as_dict: dict[str, str] = item.to_dict()
+                if item.url_encoded_name == "Broken_Shovel":
+                    # edge case: There are two links ending in "/wiki/Broken_Shovel".
+                    # so for these 2 items only, need to use their name as the key.
+                    name = item_as_dict.pop("name")
+                    data[name] = item_as_dict
+                else:
+                    url_encoded_name = item_as_dict.pop("url_encoded_name")
+                    data[url_encoded_name] = item_as_dict
+
+            json.dump(data, f, indent=4)
+            logger.info("dump_item_data_to_json: Successfully created %s", filename)
+
+    @staticmethod
+    def get_isaac_items_from_json(filename: str) -> list[IsaacItem] | None:
+        """Attempt to parse IsaacItems from the provided json filename.
+
+        Isaac items should be stored in the following example format (item's url_encoded_name is the main key):
+        "Ventricle_Razor": {
+            "name": "Ventricle Razor",
+            "item_id": "5.100.396",
+            "img_url": "https://static.wikia.nocookie.net/bindingofisaacre_gamepedia/images/9/97/Collectible_Ventricle_Razor_icon.png/revision/latest?cb=20210821162403",
+            "wiki_url": "https://bindingofisaacrebirth.fandom.com/wiki/Ventricle_Razor",
+            "description": "Creates up to two portals that remain even if Isaac leaves the room. Upon entering a portal, Isaac is teleported to the other portal.",
+            "item_quality": "1",
+            "quote": "Short cutter"
+        },
+
+        Args:
+            filename (str): The name of the json file with IsaacItem info.
+
+        Returns:
+            A list of IsaacItems. Upon failure, return None.
+        """
+        try:
+            isaac_items = []
+            with open(filename, "r", encoding="utf-8") as f:
+                data: dict[str, dict[str, str]] = json.load(f)
+                for identifier, item_data in data.items():
+                    # The Broken Shovels are loaded into JSON via their name, not the url_encoded_name
+                    if "Broken Shovel" in identifier:
+                        item_data.update({"name": identifier})
+                        isaac_items.append(IsaacItem.from_dict(item_data))
+                    else:
+                        item_data.update({"url_encoded_name": identifier})
+                        isaac_items.append(IsaacItem.from_dict(item_data))
+                return isaac_items
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logger.error("get_isaac_items_from_json: Failed to file %s: %s", filename, str(e))
+            return None
 
 
-def main() -> None:
-    # let's fetch the HTML, prase it, and see the first and last item.
+def main() -> None:  # pylint: disable=missing-function-docstring
+    # First, let's fetch the HTML, parse it, and see the first and last item.
     # the first item should be "A Pony" and last "Tonsil" as of 7/25/2024 on the wiki.
-    fetched_html = Scraper.fetch_page(WIKI_ITEMS_HOMEPAGE)
-    parsed_isaac_items = Scraper.parse_isaac_items_from_html(fetched_html)
+    html = Scraper.fetch_page(WIKI_ITEMS_HOMEPAGE)
+    isaac_items = Scraper.parse_isaac_items_from_html(html)
+    Scraper.download_item_images(isaac_items, DATA_DIR)
+    Scraper.dump_item_data_to_json(isaac_items, JSON_DUMP_FILE)
 
-    # print the first and last IsaacItem.
-    pprint(parsed_isaac_items[0].to_dict())
-    pprint(parsed_isaac_items[-1].to_dict())
+    # now that we've downloaded the images, we could also do this in the future:
+    isaac_items_from_json = Scraper.get_isaac_items_from_json(JSON_DUMP_FILE)
 
-    # download the image for each item
-    Scraper.download_item_images(parsed_isaac_items, DATA_DIR)
-
-    # example to check if you have issues downloading some images
-    missing_items = Scraper.find_imgs_that_failed_to_download(parsed_isaac_items, DATA_DIR)
-    pprint(
-        [
-            (Scraper.sanitize_filename(item.name), urllib.parse.unquote(Scraper.sanitize_filename(item.name)))
-            for item in missing_items
-        ]
-    )
-    # Scraper.download_missing_items(missing_items, DATA_DIR)
+    # we can even compare the two lists and make sure they're the same after sorting.
+    if isaac_items_from_json is not None:
+        isaac_items_from_json.sort(key=lambda x: x.name)
+        isaac_items.sort(key=lambda x: x.name)
+        assert isaac_items == isaac_items_from_json  # this works because dataclass implements __eq__ for us.
 
 
 if __name__ == "__main__":
