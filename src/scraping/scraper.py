@@ -228,7 +228,7 @@ class Scraper:
         os.makedirs(save_dir, exist_ok=True)
         logger.info("download_item_images: Downloading images, this may take a while...")
         if parallel:
-            with ThreadPoolExecutor(max_workers=10) as executor:
+            with ThreadPoolExecutor() as executor:
                 executor.map(lambda item: Scraper._download_item_image(item, save_dir), isaac_items)
         else:
             for item in isaac_items:

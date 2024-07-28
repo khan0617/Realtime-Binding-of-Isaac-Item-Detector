@@ -94,7 +94,7 @@ def main() -> None:
 
     # generate all the data augmentations
     logger.info("main: Generating augmentations, this may take a while...")
-    with ProcessPoolExecutor(max_workers=10) as executor:
+    with ProcessPoolExecutor() as executor:
         executor.map(augment_item_image, isaac_items, repeat(aug_subsets), repeat(NUM_AUGMENTED))
     logger.info("main: Done augmenting images!")
 
