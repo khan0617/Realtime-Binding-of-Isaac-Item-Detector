@@ -17,8 +17,10 @@ class Augmentation(StrEnum):
     SHEAR = "shear"
     COLOR_JITTER = "color_jitter"
     SHARPNESS = "sharpness"
+    SMOOTH = "smooth"
 
     @classmethod
     def operations_to_not_repeat(cls) -> list[Augmentation]:
-        """Returns a list of augmentations that do not make sense to repeat, such as FLIP or MIRROR."""
-        return [cls.FLIP, cls.MIRROR]
+        """Returns a list of augmentations that do not make sense to repeat (those that are not randomized),
+        such as FLIP or MIRROR."""
+        return [cls.FLIP, cls.MIRROR, cls.SMOOTH]

@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 import uuid
@@ -6,7 +7,13 @@ import cv2
 import numpy as np
 from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 
+ImageFilter.SMOOTH
+
 from data_augmentation.augmentation import Augmentation
+from logging_config import configure_logging
+
+configure_logging()
+logger = logging.getLogger(__name__)
 
 
 class DataAugmentor:
@@ -182,6 +189,9 @@ class DataAugmentor:
         elif augmentation is Augmentation.SHARPNESS:
             return DataAugmentor._sharpness(image)
 
+        elif augmentation is Augmentation.SMOOTH:
+            return DataAugmentor._smooth(image)
+
         else:
             raise ValueError(f"Unimplemented Augmentation: {augmentation}")
 
@@ -285,3 +295,17 @@ class DataAugmentor:
         image_pil = Image.fromarray(image)
         sharpened_image = ImageEnhance.Sharpness(image_pil).enhance(factor)
         return np.array(sharpened_image)
+
+    @staticmethod
+    def _smooth(image: np.ndarray) -> np.ndarray:
+        """Smooth the image, applying the following smoothing filter kernel from PIL.
+
+        filterargs = (3, 3), 13, 0, (
+            1, 1, 1,
+            1, 5, 1,
+            1, 1, 1,
+        )
+        """
+        image_pil = Image.fromarray(image)
+        filtered_image = image_pil.filter(ImageFilter.SMOOTH)
+        return np.array(filtered_image)
