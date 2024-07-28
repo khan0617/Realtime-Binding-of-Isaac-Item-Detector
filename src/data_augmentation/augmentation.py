@@ -8,14 +8,15 @@ class Augmentation(StrEnum):
 
     ROTATE = "rotate"
     NOISE = "noise"
-    FLIP = "flip"
-    MIRROR = "mirror"
+    FLIP = "flip"  # vertical (top to bottom) flip
+    MIRROR = "mirror"  # horizontal (left to right) flip
     BRIGHTNESS = "brightness"
     CONTRAST = "contrast"
     SCALE = "scale"
     TRANSLATE = "translate"
     SHEAR = "shear"
     COLOR_JITTER = "color_jitter"
+    SHARPNESS = "sharpness"
 
     @classmethod
     def operations_to_not_repeat(cls) -> list[Augmentation]:
