@@ -143,7 +143,7 @@ class DataAugmentor:
         augmentations_applied = "_".join(aug.lower() for aug in augmentations)
         filename = f"{augmentations_applied}_{uuid.uuid4().hex[:4]}.png"  # apply a random
         filepath = os.path.join(output_dir, filename)
-        logger.info("_save_image: Saving img to %s, image size is: %s", filepath, image_pil.size)
+        logger.debug("_save_image: Saving img to %s, image size is: %s", filepath, image_pil.size)
         image_pil.save(filepath)
 
     @staticmethod
@@ -320,7 +320,7 @@ class DataAugmentor:
         return np.asarray(filtered_image)
 
 
-def main() -> None:
+def main() -> None:  # pylint: disable=missing-function-docstring
     # example usage. We'll apply every augmentation to the "1up!" item.
     item_name = "8_Inch_Nails"
     image_path = os.path.join(DATA_DIR, item_name, UNMODIFIED_FILE_NAME)

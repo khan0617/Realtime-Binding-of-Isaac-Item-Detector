@@ -202,7 +202,7 @@ class Scraper:
 
         # if the path exists, we already have the image, don't need to download!
         if os.path.exists(save_path):
-            logger.info("Image for %s already exists at %s", isaac_item.name, save_path)
+            logger.debug("Image for %s already exists at %s", isaac_item.name, save_path)
             return
 
         try:
@@ -212,7 +212,7 @@ class Scraper:
             with open(save_path, "wb") as f:
                 for chunk in response.iter_content(1024):
                     f.write(chunk)
-            logger.info("Saved image for %s at %s", isaac_item.name, save_path)
+            logger.debug("Saved image for %s at %s", isaac_item.name, save_path)
         except (requests.RequestException, Exception) as e:  # pylint: disable=broad-exception-caught
             logger.error("Failed to download image for %s! %s", isaac_item.name, str(e))
 
@@ -226,12 +226,14 @@ class Scraper:
             parallel (bool): If true, parallelize the downloads, else do them sequentially.
         """
         os.makedirs(save_dir, exist_ok=True)
+        logger.info("download_item_images: Downloading images, this may take a while...")
         if parallel:
             with ThreadPoolExecutor(max_workers=10) as executor:
                 executor.map(lambda item: Scraper._download_item_image(item, save_dir), isaac_items)
         else:
             for item in isaac_items:
                 Scraper._download_item_image(item, save_dir)
+        logger.info("download_item_images: Done downloading images!")
 
     @staticmethod
     def _find_imgs_that_failed_to_download(isaac_items: list[IsaacItem], data_dir: str) -> list[IsaacItem]:
