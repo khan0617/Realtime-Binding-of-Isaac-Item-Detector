@@ -16,6 +16,7 @@ from constants import (
     CACHE_FILE,
     DATA_DIR,
     JSON_DUMP_FILE,
+    UNMODIFIED_FILE_NAME,
     WIKI_HOMEPAGE_ROOT,
     WIKI_ITEMS_HOMEPAGE,
 )
@@ -185,8 +186,8 @@ class Scraper:
     def _download_item_image(isaac_item: IsaacItem, save_dir: str) -> None:
         """Threadpool helper: Downloads the image for this IsaacItem and saves it to the specified directory.
 
-        All item images will be downloaded into {save_dir}/{item_name}/original_img.png
-        For example, the image for "Guppy's Head" will be like: {save_dir}/Guppy's Head/original_img.png
+        All item images will be downloaded into {save_dir}/{item_name}/UNMODIFIED_FILE_NAME
+        For example, the image for "Guppy's Head" will be like: {save_dir}/Guppy's Head/UNMODIFIED_FILE_NAME
 
         Args:
             isaac_item (IsaacItem): The IsaacItem we want to download an image for.
@@ -194,7 +195,7 @@ class Scraper:
         """
         # define the directory and file path using the encoded name
         item_dir = os.path.join(save_dir, isaac_item.img_dir)
-        save_path = os.path.join(item_dir, "original_img.png")
+        save_path = os.path.join(item_dir, UNMODIFIED_FILE_NAME)
 
         # make sure the destination directory exists
         os.makedirs(item_dir, exist_ok=True)

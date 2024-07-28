@@ -2,6 +2,7 @@
 scraper_cache/
 data/
 *.json
+*.png
 
 # below is the github recommended python .gitignore (above is my additions)
 # Byte-compiled / optimized / DLL files

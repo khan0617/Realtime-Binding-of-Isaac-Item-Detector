@@ -27,7 +27,8 @@ dependencies = [
     "beautifulsoup4>=4",
     "opencv-python>=4.10",
     "numpy>=2.0.1",
-    "pillow>=10.4"
+    "pillow>=10.4",
+    "matplotlib>=3.9.1"
 ]
 
 [project.urls]
