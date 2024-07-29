@@ -53,8 +53,12 @@ class DataAugmentor:
 
         os.makedirs(output_dir, exist_ok=True)
 
-        # need to do convert() otherwise numpy doesn't preserve the png transparent backround and everything turns black.
-        image_pil = Image.open(image_path).convert(mode="RGBA")
+        # may need to do a convert() otherwise numpy doesn't preserve the png transparent backround and everything turns black.
+        _, file_extension = os.path.splitext(image_path)
+        if file_extension in [".png", ".PNG"]:
+            image_pil = Image.open(image_path).convert(mode="RGBA")
+        else:
+            image_pil = Image.open(image_path)
         image_np = np.asarray(image_pil)
 
         for aug in augmentations:
@@ -141,12 +145,13 @@ class DataAugmentor:
         """
         image_pil = Image.fromarray(image)
         augmentations_applied = "_".join(aug.lower() for aug in augmentations)
-        filename = f"{augmentations_applied}_{uuid.uuid4().hex[:4]}.png"  # apply a random
+        filename = f"{augmentations_applied}_{uuid.uuid4().hex[:4]}.png"  # apply a random uuid prefix to each image for uniqueness
         filepath = os.path.join(output_dir, filename)
         logger.debug("_save_image: Saving img to %s, image size is: %s", filepath, image_pil.size)
         image_pil.save(filepath)
 
     @staticmethod
+    # pylint: disable=too-many-return-statements, too-many-branches
     def _dispatch_augmentation(image: np.ndarray, augmentation: Augmentation) -> np.ndarray:
         """Dispatches the given augmentation to the appropriate method.
 
@@ -267,15 +272,11 @@ class DataAugmentor:
         dx = int(np.random.uniform(-max_trans, max_trans) * width)
         dy = int(np.random.uniform(-max_trans, max_trans) * height)
 
-        # the first 3 elements represent the changing of x, last 3 represent changing y.
-        translation_matrix = (
-            1,
-            0,
-            dx,
-            0,
-            1,
-            dy,
-        )  # https://en.wikipedia.org/wiki/Transformation_matrix#Affine_transformations
+        # fmt:off
+        # the first 3 elements represent the changing of x, last 3 represent changing y
+        translation_matrix = (1, 0, dx, 0, 1, dy)  # https://en.wikipedia.org/wiki/Transformation_matrix#Affine_transformations 
+        # fmt: on
+
         image_pil = Image.fromarray(image)
         translated_image = image_pil.transform(image_pil.size, Image.Transform.AFFINE, translation_matrix)
         return np.asarray(translated_image)

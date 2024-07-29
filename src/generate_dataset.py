@@ -196,7 +196,7 @@ def main() -> None:
     if all_defaults_used and not args.no_confirm:
         confirm = input("No options specified. Proceed with default settings? (y/n): ").strip()
         if confirm.lower() not in ["y", "yes"]:
-            print(f"Operation cancelled. {confirm = }")
+            print("Operation cancelled.")
             return
 
     # get the isaac items from the html response, then dump to json.
