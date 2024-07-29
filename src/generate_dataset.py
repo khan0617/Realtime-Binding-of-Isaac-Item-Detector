@@ -126,7 +126,7 @@ def _clean_data_dir(data_dir: str) -> None:
     logger.info("clean_data_dir: Cleaning data directory: %s/ ...", data_dir)
     subdirs = [
         os.path.join(data_dir, d)
-        for d in os.listdir(data_dir) 
+        for d in os.listdir(data_dir)
         if os.path.isdir(os.path.join(data_dir, d))
     ]
     # fmt: on
@@ -162,9 +162,8 @@ def main() -> None:
     - `--no_confirm` If set, skip the confirmation step when using all defaults.
 
     Example usage:
-        `python generate_dataset.py --num_augmented 5 --seed 123 --max_subset_size 3 --data_dir my_data`
-
-        `python generate_dataset.py --no_confirm` (use all defaults and skip the confirmation step)
+        \n`python generate_dataset.py --num_augmented 5 --seed 123 --max_subset_size 3 --data_dir my_data`
+        \n`python generate_dataset.py --no_confirm` (use all defaults and skip the confirmation step)
     """
     # fmt: off
     parser = argparse.ArgumentParser(
