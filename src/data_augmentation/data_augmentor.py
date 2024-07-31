@@ -204,7 +204,7 @@ class DataAugmentor:
             raise ValueError(f"Unimplemented Augmentation: {augmentation}")
 
     @staticmethod
-    def _rotate(image: np.ndarray) -> np.ndarray:  # tested! works :)
+    def _rotate(image: np.ndarray) -> np.ndarray:
         """Rotates the image by a random angle in the range +-170 degrees"""
         angle = np.random.uniform(-170, 170)
         image_pil = Image.fromarray(image)
@@ -212,7 +212,7 @@ class DataAugmentor:
         return np.asarray(rotated_image)
 
     @staticmethod
-    def _noise(image: np.ndarray) -> np.ndarray:  # tested, thing it works? but it does distort the
+    def _noise(image: np.ndarray) -> np.ndarray:
         """Adds random Gaussian noise to the image."""
         noise_level = np.random.uniform(0.01, 0.05)
         if image.shape[-1] == 4:  # RGBA image, let's not corrupt the alpha (transparency) channel.

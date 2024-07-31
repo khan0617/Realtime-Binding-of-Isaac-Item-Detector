@@ -38,7 +38,7 @@ class IsaacItem:
 
     # unique image directory; where all the images for this item are stored.
     # this does NOT include the overall DATA_DIR. So to access the image you likely need to do:
-    # {DATA_DIR}/{img_dir}/... images here ...
+    # {DATA_DIR}/{ITEMS_DIR}/item's_name/... images here ...
     img_dir: str
 
     def to_dict(self) -> dict:

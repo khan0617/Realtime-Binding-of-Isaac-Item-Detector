@@ -6,7 +6,7 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from itertools import chain, combinations, repeat
 
 from constants import DATA_DIR as _DATA_DIR  # I redefine a DEFAULT_DATA_DIR here and don't want to mix them up
-from constants import JSON_DUMP_FILE, UNMODIFIED_FILE_NAME, WIKI_ITEMS_HOMEPAGE
+from constants import ITEM_DIR, JSON_DUMP_FILE, UNMODIFIED_FILE_NAME, WIKI_ITEMS_HOMEPAGE
 from data_augmentation.augmentation import Augmentation
 from data_augmentation.data_augmentor import DataAugmentor
 from logging_config import configure_logging
@@ -33,6 +33,7 @@ DEFAULT_NUM_AUGMENTED = 2  # how many images to generate per combination of augm
 DEFAULT_SEED = 39  # おかしいミク番号w
 DEFAULT_MAX_SUBSET_SIZE = 2
 DEFAULT_DATA_DIR = _DATA_DIR
+DEFAULT_ITEM_DIR = ITEM_DIR
 
 
 class _TypedArgparseNamespace(argparse.Namespace):
@@ -42,6 +43,7 @@ class _TypedArgparseNamespace(argparse.Namespace):
     seed: int
     max_subset_size: int
     data_dir: str
+    item_dir: str
     clean: bool
     no_confirm: bool
 
@@ -67,7 +69,7 @@ def _get_non_empty_subsets(iterable: Iterable, max_subset_size: int | None = Non
 
 
 def _augment_item_image(
-    item: IsaacItem, aug_subsets: list[tuple[Augmentation]], num_augmented: int, data_dir: str, seed: int
+    item: IsaacItem, aug_subsets: list[tuple[Augmentation]], num_augmented: int, full_item_dir: str, seed: int
 ) -> None:
     """
     Augment images for a single Isaac item using specified augmentation combinations.
@@ -78,12 +80,12 @@ def _augment_item_image(
         item (IsaacItem): The IsaacItem object containing details about the item.
         aug_subsets (list[tuple[Augmentation]]): List of augmentation combinations to apply.
         num_augmented (int): Number of augmented images to generate per combination.
-        data_dir (str): The root directory containing folders for each item.
-            I.e. if data_dir == "data", then we should have data/A_Pony/, data/Guppy's Head/, etc.
+        full_item_dir (str): The directory containing folders for each item.
+            I.e. if full_item_dir == "data/items/", then we should have data/items/A_Pony/, data/items/Guppy's Head/, etc.
         seed (int): A seed to observe reproducible results when running augment_image() repeatedly.
     """
-    output_dir = os.path.join(data_dir, item.img_dir)
-    image_path = os.path.join(data_dir, item.img_dir, UNMODIFIED_FILE_NAME)
+    output_dir = os.path.join(full_item_dir, item.img_dir)
+    image_path = os.path.join(full_item_dir, item.img_dir, UNMODIFIED_FILE_NAME)
     if not os.path.exists(image_path):
         logger.warning("Image not found for item: %s, expected at: %s", item.name, image_path)
         return
@@ -157,7 +159,8 @@ def main() -> None:
     - `--num_augmented`: Number of augmented images to generate per augmentation combination.
     - `--seed`: Random seed for reproducibility.
     - `--max_subset_size`: Maximum number of augmentations to apply at once to an image.
-    - `--data_dir`: Directory to store original and augmented images.
+    - `--data_dir`: Root directory for the data.
+    - `--item_dir`: Subdirectory in --data_dir to store augmented images.
     - `--clean`: If set, only cleans the data directory of augmented images.
     - `--no_confirm` If set, skip the confirmation step when using all defaults.
 
@@ -176,7 +179,8 @@ def main() -> None:
     parser.add_argument("--num_augmented", type=int, default=DEFAULT_NUM_AUGMENTED, help=f"Number of augmented images per combo (default: {DEFAULT_NUM_AUGMENTED}).")
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED, help=f"Random seed for reproducibility (default: {DEFAULT_SEED}).")
     parser.add_argument("--max_subset_size", type=int, default=DEFAULT_MAX_SUBSET_SIZE, help=f"Max size of augmentation subsets (default: {DEFAULT_MAX_SUBSET_SIZE}).")
-    parser.add_argument("--data_dir", type=str, default=DEFAULT_DATA_DIR, help=f"Directory to store augmented images (default: '{DEFAULT_DATA_DIR}').")
+    parser.add_argument("--data_dir", type=str, default=DEFAULT_DATA_DIR, help=f"Root directory for the data. (default: '{DEFAULT_DATA_DIR}').")
+    parser.add_argument("--item_dir", type=str, default=DEFAULT_ITEM_DIR, help=f"Subdirectory in --data_dir to store augmented images (default: '{DEFAULT_ITEM_DIR}').")
     parser.add_argument("--clean", action="store_true", help="Clean the data directory of augmented images.")
     parser.add_argument("--no-confirm", action="store_true", help="Skip the confirmation prompt when running with default settings.")
     # fmt: on
@@ -187,6 +191,7 @@ def main() -> None:
         and args.seed == DEFAULT_SEED
         and args.max_subset_size == DEFAULT_MAX_SUBSET_SIZE
         and args.data_dir == DEFAULT_DATA_DIR
+        and args.item_dir == DEFAULT_ITEM_DIR
     )
 
     if args.clean:
@@ -202,11 +207,13 @@ def main() -> None:
     # get the isaac items from the html response, then dump to json.
     html = Scraper.fetch_page(WIKI_ITEMS_HOMEPAGE)
     isaac_items = Scraper.parse_isaac_items_from_html(html)
-    Scraper.download_item_images(isaac_items, args.data_dir)
+    Scraper.download_item_images(isaac_items, args.data_dir, args.item_dir)
     Scraper.dump_item_data_to_json(isaac_items, JSON_DUMP_FILE)
 
     # note: if len(AUGMENTATIONS_TO_APPLY) == 10, we get 55 subsets when max_subset_size == 2.
     aug_subsets: list[tuple[Augmentation]] = list(_get_non_empty_subsets(AUGMENTATIONS_TO_APPLY, args.max_subset_size))
+
+    full_item_dir = os.path.join(args.data_dir, args.item_dir)
 
     # generate all the data augmentations in parallel
     logger.info("main: Generating augmentations, this may take a while...")
@@ -216,7 +223,7 @@ def main() -> None:
             isaac_items,
             repeat(aug_subsets),
             repeat(args.num_augmented),
-            repeat(args.data_dir),
+            repeat(full_item_dir),
             repeat(args.seed),
         )
     logger.info("main: Done augmenting images!")

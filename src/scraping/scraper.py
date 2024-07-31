@@ -15,6 +15,7 @@ from constants import (
     CACHE_DIR,
     CACHE_FILE,
     DATA_DIR,
+    ITEM_DIR,
     JSON_DUMP_FILE,
     UNMODIFIED_FILE_NAME,
     WIKI_HOMEPAGE_ROOT,
@@ -67,8 +68,9 @@ class Scraper:
         """
         # create the cache dir and load the cache.
         os.makedirs(CACHE_DIR, exist_ok=True)
+        cache_file_path = os.path.join(CACHE_DIR, CACHE_FILE)
         try:
-            with open(CACHE_FILE, "r", encoding="utf-8") as f:
+            with open(cache_file_path, "r", encoding="utf-8") as f:
                 cache: dict[str, str] = json.load(f)
         except FileNotFoundError:
             cache = {}
@@ -83,7 +85,7 @@ class Scraper:
             html_content = response.text
 
             cache[url] = html_content
-            with open(CACHE_FILE, "w", encoding="utf-8") as f:
+            with open(cache_file_path, "w", encoding="utf-8") as f:
                 json.dump(cache, f, ensure_ascii=False, indent=4)
 
             logger.info("fetch_page: Successfully got response for url and cached it: %s", url)
@@ -183,22 +185,22 @@ class Scraper:
         return isaac_items
 
     @staticmethod
-    def _download_item_image(isaac_item: IsaacItem, save_dir: str) -> None:
+    def _download_item_image(isaac_item: IsaacItem, full_item_dir: str) -> None:
         """Threadpool helper: Downloads the image for this IsaacItem and saves it to the specified directory.
 
-        All item images will be downloaded into {save_dir}/{item_name}/UNMODIFIED_FILE_NAME
-        For example, the image for "Guppy's Head" will be like: {save_dir}/Guppy's Head/UNMODIFIED_FILE_NAME
+        All item images will be downloaded into {full_item_dir}/Guppy's Head/UNMODIFIED_FILE_NAME.
+        Ex: The image for "Guppy's Head" will be like: {full_item_dir}/Guppy's Head/UNMODIFIED_FILE_NAME.
 
         Args:
             isaac_item (IsaacItem): The IsaacItem we want to download an image for.
-            save_dir (str): The root directory where the image will be saved.
+            full_item_dir (str): The full path for where items will be stored. Ex: "data/items/".
         """
         # define the directory and file path using the encoded name
-        item_dir = os.path.join(save_dir, isaac_item.img_dir)
-        save_path = os.path.join(item_dir, UNMODIFIED_FILE_NAME)
+        this_item_data_dir = os.path.join(full_item_dir, isaac_item.img_dir)
+        save_path = os.path.join(this_item_data_dir, UNMODIFIED_FILE_NAME)
 
         # make sure the destination directory exists
-        os.makedirs(item_dir, exist_ok=True)
+        os.makedirs(this_item_data_dir, exist_ok=True)
 
         # if the path exists, we already have the image, don't need to download!
         if os.path.exists(save_path):
@@ -217,45 +219,56 @@ class Scraper:
             logger.error("Failed to download image for %s! %s", isaac_item.name, str(e))
 
     @staticmethod
-    def download_item_images(isaac_items: list[IsaacItem], save_dir: str, parallel: bool = True) -> None:
+    def download_item_images(isaac_items: list[IsaacItem], data_dir: str, item_dir: str, parallel: bool = True) -> None:
         """Downloads images for all provided IsaacItems.
 
         Args:
             isaac_items (List[IsaacItem]): A list of IsaacItems.
-            save_dir (str): The directory where images will be saved.
+            data_dir (str): The root directory where image folders will be saved.
+            item_dir (str): Subdirectory within data_dir for item images.
+                Ex: If you want the individual item folders to be stored in 'data/items/, pass in
+                data_dir='data', and item_dir='items'. This function handles concatenation.
             parallel (bool): If true, parallelize the downloads, else do them sequentially.
         """
-        os.makedirs(save_dir, exist_ok=True)
+        full_item_dir = os.path.join(data_dir, item_dir)
+        os.makedirs(data_dir, exist_ok=True)
+        os.makedirs(full_item_dir, exist_ok=True)
         logger.info("download_item_images: Downloading images, this may take a while...")
         if parallel:
             with ThreadPoolExecutor() as executor:
-                executor.map(lambda item: Scraper._download_item_image(item, save_dir), isaac_items)
+                executor.map(lambda item: Scraper._download_item_image(item, full_item_dir), isaac_items)
         else:
             for item in isaac_items:
-                Scraper._download_item_image(item, save_dir)
+                Scraper._download_item_image(item, full_item_dir)
         logger.info("download_item_images: Done downloading images!")
 
     @staticmethod
-    def _find_imgs_that_failed_to_download(isaac_items: list[IsaacItem], data_dir: str) -> list[IsaacItem]:
-        """Compare the data_dir and isaac_items and and get a list of which images failed to download.
+    def _find_imgs_that_failed_to_download(
+        isaac_items: list[IsaacItem], data_dir: str, item_dir: str
+    ) -> list[IsaacItem]:
+        """Compare the data_dir and isaac_items and get a list of which images failed to download.
 
-        This method assumes that data_dir organizes item images as follows: {data_dir}/{item_name}/original_img.png.
-        Ex. data/Guppy's Head/original_img.png.
+        This method assumes that data_dir organizes item images as follows: {data_dir}/{item_dir}/{item_name}/original_img.png.
+        Ex. data/items/Guppy's Head/original_img.png.
 
         Args:
             isaac_items (List[IsaacItem]): A list of IsaacItems.
             data_dir (str): Root directory where image folders are stored.
+            item_dir (str): Subdirectory within data_dir for item images.
 
         Returns:
-            A list of str. Each str in this list is an IsaacItem which does not have a downloaded img.
-            Ex. if we return [IsaacItem("Guppy's Head", ...)] then {data_dir}/Guppy's Head/original_img.png does not exist.
+            List[IsaacItem]: A list of IsaacItems which do not have a downloaded image.
+            Ex. if we return [IsaacItem("Guppy's Head", ...)], then {data_dir}/{item_dir}/Guppy's Head/original_img.png does not exist.
             All other items had their images downloaded successfully.
         """
-        files = set(os.listdir(data_dir))
+        # get the list of directories in the item_dir directory
+        item_dirs = set(os.listdir(os.path.join(data_dir, item_dir)))
+
         missing_items = []
         for item in isaac_items:
-            if item.name not in files and item.url_encoded_name not in files:
+            if item.name not in item_dirs and item.url_encoded_name not in item_dirs:
                 missing_items.append(item)
+
         logger.info("find_imgs_that_failed_to_download: found %d missing images!", len(missing_items))
         return missing_items
 
@@ -264,7 +277,7 @@ class Scraper:
         """Write the dictionary representation for each item into the specified filename.
 
         In the JSON file, each object is represented as follows.
-        `<img_dir>: {... the rest of the object ...}`
+        `<isaac_item.img_dir>: {... the rest of the object ...}`
 
         Args:
             isaac_items (list[IsaacItem]): The IsaacItems to dump to the file.
@@ -284,7 +297,7 @@ class Scraper:
     def get_isaac_items_from_json(filename: str) -> list[IsaacItem] | None:
         """Attempt to parse IsaacItems from the provided json filename.
 
-        Isaac items should be stored in the following example format (item's img_dir is the main key):
+        Isaac items should be stored in the following example format (item's img_dir attr is the main key):
 
         "Ventricle_Razor": {
             "name": "Ventricle Razor",
@@ -325,7 +338,7 @@ def main() -> None:  # pylint: disable=missing-function-docstring
     # the first item should be "A Pony" and last "Tonsil" as of 7/25/2024 on the wiki.
     html = Scraper.fetch_page(WIKI_ITEMS_HOMEPAGE)
     isaac_items = Scraper.parse_isaac_items_from_html(html)
-    Scraper.download_item_images(isaac_items, DATA_DIR)
+    Scraper.download_item_images(isaac_items, DATA_DIR, ITEM_DIR)
     print(f"1st IsaacItem: {isaac_items[0].name}, last IsaacItem: {isaac_items[-1].name}")
 
     # save the isaac items to a json file like this
