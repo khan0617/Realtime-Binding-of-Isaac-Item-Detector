@@ -118,24 +118,24 @@ def _delete_augmented_images_from_item_dir(item_dir: str) -> None:
                 logger.error("_delete_augmented_images_from_item_dir: Failed to remove %s: %s", file_path, str(e))
 
 
-def _clean_data_dir(data_dir: str) -> None:
+def _clean_data_dir(full_item_dir: str) -> None:
     """Remove any augmented images from the specified data_dir.
 
     Args:
-        data_dir (str): The root data directory. Within data_dir there should be subdirectories for each item.
+        full_item_dir (str): The items/ directory (like data/items/). Within item_dir there should be subdirectories for each item.
     """
     # fmt: off
-    logger.info("clean_data_dir: Cleaning data directory: %s/ ...", data_dir)
+    logger.info("clean_data_dir: Cleaning data directory: %s/ ...", full_item_dir)
     subdirs = [
-        os.path.join(data_dir, d)
-        for d in os.listdir(data_dir)
-        if os.path.isdir(os.path.join(data_dir, d))
+        os.path.join(full_item_dir, d)
+        for d in os.listdir(full_item_dir)
+        if os.path.isdir(os.path.join(full_item_dir, d))
     ]
     # fmt: on
 
     with ThreadPoolExecutor() as executor:
         executor.map(_delete_augmented_images_from_item_dir, subdirs)
-    logger.info("clean_data_dir: Done! Removed augmented images from: %s/", data_dir)
+    logger.info("clean_data_dir: Done! Removed augmented images from: %s/", full_item_dir)
 
 
 def main() -> None:
@@ -194,8 +194,10 @@ def main() -> None:
         and args.item_dir == DEFAULT_ITEM_DIR
     )
 
+    full_item_dir = os.path.join(args.data_dir, args.item_dir)
+
     if args.clean:
-        _clean_data_dir(args.data_dir)
+        _clean_data_dir(full_item_dir)
         return
 
     if all_defaults_used and not args.no_confirm:
@@ -212,8 +214,6 @@ def main() -> None:
 
     # note: if len(AUGMENTATIONS_TO_APPLY) == 10, we get 55 subsets when max_subset_size == 2.
     aug_subsets: list[tuple[Augmentation]] = list(_get_non_empty_subsets(AUGMENTATIONS_TO_APPLY, args.max_subset_size))
-
-    full_item_dir = os.path.join(args.data_dir, args.item_dir)
 
     # generate all the data augmentations in parallel
     logger.info("main: Generating augmentations, this may take a while...")
