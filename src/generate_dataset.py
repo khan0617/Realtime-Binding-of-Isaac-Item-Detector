@@ -7,8 +7,8 @@ from itertools import chain, combinations, repeat
 
 from constants import DATA_DIR as _DATA_DIR  # I redefine a DEFAULT_DATA_DIR here and don't want to mix them up
 from constants import ITEM_DIR, JSON_DUMP_FILE, UNMODIFIED_FILE_NAME, WIKI_ITEMS_HOMEPAGE
-from data_augmentation.augmentation import Augmentation
-from data_augmentation.data_augmentor import DataAugmentor
+from image_processing.augmentation import Augmentation
+from image_processing.data_augmentor import DataAugmentor
 from logging_config import configure_logging
 from scraping.isaac_item import IsaacItem
 from scraping.scraper import Scraper
