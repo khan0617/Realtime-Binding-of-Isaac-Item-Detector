@@ -1,6 +1,6 @@
 # ignore the cached html pages
 scraper_cache/
-data/
+# data/
 *.json
 *.png
 

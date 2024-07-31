@@ -8,3 +8,8 @@ Ever played the Binding of Isaac and didn't know what a new item does? Feel like
 - Train the model using the augmented dataset.
 - Figure out how to screen record `isaac.exe` from python, so that I can feed maybe one frame per second to the object detection model.
 - Create a web-app with a Flask backend and React frontend (never used React so I want to learn) to display the feed, the bounding box detection of the model and the predicted item, with its description and info.
+
+This `isaac_backgrounds` folder contains item backgrounds which I manually downloaded from the Isaac Wiki's Gallery. You can start to access all images here: https://bindingofisaacrebirth.fandom.com/wiki/Rooms?file=Binding_Of_Octorock.jpg#Gallery
+
+This folder is only a small subset of the images in the gallery. I picked them to represent a variety of floors and rooms. I had to convert the images from the gallery from `.webp` to `.jpg` here.
+
