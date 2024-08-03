@@ -227,7 +227,7 @@ class DataAugmentor:
 
     @staticmethod
     def _vertical_flip(image: np.ndarray) -> np.ndarray:
-        """Flip the imnage vertically (top to bottom flip)"""
+        """Flip the image vertically (top to bottom flip)"""
         flipped_pil_img = ImageOps.flip(Image.fromarray(image))
         return np.asarray(flipped_pil_img)
 

@@ -15,6 +15,8 @@ BROKEN_SHOVEL_PASSIVE_ID = "5.100.551"
 LOG_DIR = "logs"
 LOG_FILENAME = "app.log"
 TARGET_BACKGROUND_SIZE = (1000, 625)
+ISAAC_ITEM_SCALE_FACTOR = 2.5
+SEED = 39  # おかしいミク番号w
 
 # the isaac item images should only be randomly placed with the area this box represents
 # I used ImageOverlayProcessor.visualize_overlayable_area(...) with various combos to find this

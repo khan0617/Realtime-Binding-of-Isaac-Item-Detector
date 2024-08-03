@@ -6,7 +6,9 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from itertools import chain, combinations, repeat
 
 from constants import DATA_DIR as _DATA_DIR  # I redefine a DEFAULT_DATA_DIR here and don't want to mix them up
-from constants import ITEM_DIR, JSON_DUMP_FILE, UNMODIFIED_FILE_NAME, WIKI_ITEMS_HOMEPAGE
+from constants import ITEM_DIR, JSON_DUMP_FILE
+from constants import SEED as _SEED
+from constants import UNMODIFIED_FILE_NAME, WIKI_ITEMS_HOMEPAGE
 from image_processing.augmentation import Augmentation
 from image_processing.data_augmentor import DataAugmentor
 from logging_config import configure_logging
@@ -30,7 +32,7 @@ AUGMENTATIONS_TO_APPLY = [
 ]
 
 DEFAULT_NUM_AUGMENTED = 2  # how many images to generate per combination of augmentation
-DEFAULT_SEED = 39  # おかしいミク番号w
+DEFAULT_SEED = _SEED
 DEFAULT_MAX_SUBSET_SIZE = 2
 DEFAULT_DATA_DIR = _DATA_DIR
 DEFAULT_ITEM_DIR = ITEM_DIR
