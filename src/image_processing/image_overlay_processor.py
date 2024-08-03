@@ -236,7 +236,7 @@ class ImageOverlayProcessor:
                 resized_image.save(output_path)
                 logger.debug("Processed and saved: %s to %s", output_path, target_size)
 
-    def visualize_bbox_area(self, background: str | Image.Image, bbox: Bbox) -> None:
+    def visualize_bbox_area(self, background: str | Image.ImageFile.ImageFile, bbox: Bbox) -> None:
         """Displays an image with a bounding box overlay.
 
         Used for debugging purposes. Isaac backgrounds include walls, and we don't
@@ -248,7 +248,7 @@ class ImageOverlayProcessor:
             background_name (Union[str, PIL.Image.Image]): The name (not path) of the background file or the image object itself.
             bbox (Bbox): Bounding box to overlay on the image.
         """
-        image: Image.ImageFile.ImageFile | Image.Image
+        image: Image.ImageFile.ImageFile
         if isinstance(background, str):
             image = Image.open(os.path.join(self._full_background_dir, background))
         else:
