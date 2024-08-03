@@ -4,11 +4,10 @@ import os
 import random
 from concurrent.futures import ProcessPoolExecutor
 from itertools import repeat
-from urllib.parse import unquote
 
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
-from PIL import Image, ImageOps
+from PIL import Image, ImageFile, ImageOps
 
 from constants import (
     BACKGROUND_DIR,
@@ -20,39 +19,40 @@ from constants import (
     SEED,
     TARGET_BACKGROUND_SIZE,
 )
-from image_processing.bbox import Bbox
+from image_processing.bbox import CocoBbox, YoloBbox
 from logging_config import configure_logging
+from utils import convert_item_name_to_id, read_yolo_label_file
 
 configure_logging()
 logger = logging.getLogger(__name__)
 
 
-def _save_overlay_metadata(output_path: str, item_name: str, background_name: str, bbox: Bbox) -> None:
-    """Save metadata for an item overlay as a JSON file.
+def _save_overlay_metadata(output_path: str, item_name: str, bbox: YoloBbox) -> None:
+    """Save metadata for an item overlay as a .txt file in YOLO format.
+
+    Each .txt label file consists of lines like: `<class_id> <x_center> <y_center> <width> <height>`
+    If we had multiple items on screen we could supply multiple lines.
+    We will use the Isaac item id as the yolo class ID.
+    So for item_id "5.100.320", we'll use 320 (int) as the yolo class id.
+
+    Example: 0 0.48 0.63 0.69 0.71
 
     Args:
-        output_path (str): The path to save the JSON file (must end in .json).
+        output_path (str): The path to save the .txt file (must end in .txt).
         item_name (str): The name of the item (likely url-encoded)
-        background_name (str): The name of the background (ex. "Library_7").
-        bbox (Bbox): The bounding box of the overlaid item.
+        bbox (YoloBbox): The bounding box of the overlaid item.
     """
-    metadata = {
-        "item_name": item_name,
-        "background_name": background_name,
-        "bbox": {
-            "x": bbox.x,
-            "y": bbox.y,
-            "w": bbox.w,
-            "h": bbox.h,
-        },
-    }
+    class_id = convert_item_name_to_id(item_name)
+    metadata = f"{class_id} {bbox.x_center} {bbox.y_center} {bbox.width} {bbox.height}"
+
     with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(metadata, f, indent=4)
+        f.write(metadata)
+
     logger.debug("_save_overlay_metadata: Saved metadata at path %s", output_path)
 
 
 def _overlay_augmented_images_on_background(
-    overlay_area: Bbox,
+    overlay_area: CocoBbox,
     background: Image.Image,
     item_paths: list[str],
     item_name: str,
@@ -62,7 +62,7 @@ def _overlay_augmented_images_on_background(
     """Overlay each image in item_paths onto background with random positioning within overlay_area.
 
     Args:
-        overlay_area (Bbox): The bounding box area within which items can be overlaid.
+        overlay_area (CocoBbox): The bounding box area within which items can be overlaid.
         background (PIL.Image.Image): The background image onto which items will be overlaid.
         item_paths (List[str]): List of complete file paths to augmented item images.
         item_name (str): The name of the item being overlaid. The name is likely url-encoded (ex. "A_Pony")
@@ -81,7 +81,7 @@ def _overlay_augmented_images_on_background(
         # get random paste location on the image
         x = random.randint(overlay_area.x, overlay_area.x + overlay_area.w - item_image.width)
         y = random.randint(overlay_area.y, overlay_area.y + overlay_area.h - item_image.height)
-        item_bbox = Bbox(x, y, item_image.width, item_image.height)
+        item_bbox = CocoBbox(x, y, item_image.width, item_image.height)
 
         # overlay the item onto the background
         background_copy = background.copy()
@@ -102,16 +102,15 @@ def _overlay_augmented_images_on_background(
         background_copy.save(output_path)
         logger.debug("_overlay_augmented_images_on_background: Saved overlayed image: %s", output_path)
         _save_overlay_metadata(
-            output_path=f"{os.path.splitext(output_path)[0]}.json",  # remove ".jpg" from the end and make it ".json"
+            output_path=f"{os.path.splitext(output_path)[0]}.txt",  # remove ".jpg" from the end and make it ".txt"
             item_name=item_name,
-            background_name=background_name,
-            bbox=item_bbox,
+            bbox=item_bbox.to_yolo_bbox(background_copy.width, background_copy.height),
         )
 
 
 def _overlay_worker(
     background_file: str,
-    overlay_area: Bbox,
+    overlay_area: CocoBbox,
     num_images_to_use: int,
     full_item_dir: str,
     full_background_dir: str,
@@ -236,7 +235,7 @@ class ImageOverlayProcessor:
                 resized_image.save(output_path)
                 logger.debug("Processed and saved: %s to %s", output_path, target_size)
 
-    def visualize_bbox_area(self, background: str | Image.ImageFile.ImageFile, bbox: Bbox) -> None:
+    def visualize_bbox_area(self, background: str | ImageFile.ImageFile, bbox: CocoBbox) -> None:
         """Displays an image with a bounding box overlay.
 
         Used for debugging purposes. Isaac backgrounds include walls, and we don't
@@ -246,9 +245,9 @@ class ImageOverlayProcessor:
 
         Args:
             background_name (Union[str, PIL.Image.Image]): The name (not path) of the background file or the image object itself.
-            bbox (Bbox): Bounding box to overlay on the image.
+            bbox (CocoBbox): Bounding box to overlay on the image.
         """
-        image: Image.ImageFile.ImageFile
+        image: ImageFile.ImageFile
         if isinstance(background, str):
             image = Image.open(os.path.join(self._full_background_dir, background))
         else:
@@ -260,14 +259,16 @@ class ImageOverlayProcessor:
         plt.title(os.path.basename(image.filename))
         plt.show()
 
-    def overlay_items_on_backgrounds(self, overlay_area: Bbox, num_images_to_use: int, seed: int | None = None) -> None:
+    def overlay_items_on_backgrounds(
+        self, overlay_area: CocoBbox, num_images_to_use: int, seed: int | None = None
+    ) -> None:
         """
         Overlay augmented item images (.png) onto background images (.jpg) and save the resulting images as .jpg.
 
         This method works in parallel across processors using ProcessPoolExecutor.
 
         Args:
-            overlay_area (Bbox): The bounding box area within which items can be overlaid.
+            overlay_area (CocoBbox): The bounding box area within which items can be overlaid.
             num_images_to_use (int): The number of images to use for each item per background (randomly selected).
             seed (int, optional): Seed the randomizer for placing images on backgrounds.
         """
@@ -280,7 +281,7 @@ class ImageOverlayProcessor:
             confirm = (
                 input(
                     f"Looks like there are {len(sub_dirs_in_full_output_dir)} subdirectories in {self._full_output_dir} already. "
-                    "Continuing will overwrite existing overlays. Do you want to proceed with overlay generation? (y/n): "
+                    "Continuing could overwrite existing overlays. Do you want to proceed with overlay generation? (y/n): "
                 )
                 .strip()
                 .lower()
@@ -317,6 +318,8 @@ class ImageOverlayProcessor:
         Repeat this `num_images` times. Prerequisite: the output dir ) must be populated with images (meaning you have already called
         overlay_items_on_backgrounds(...) before this method.)
 
+        Note: Since the bboxes are stored in .txt files
+
         So we could plot 1 image from A_Pony/, 1 from 3_Dollar_Bill/, and so on.
 
         Args:
@@ -338,16 +341,14 @@ class ImageOverlayProcessor:
 
             image_file = random.choice(image_files)
             image_path = os.path.join(background_dir, image_file)
-            json_path = os.path.splitext(image_path)[0] + ".json"
+            yolo_label_file_path = os.path.splitext(image_path)[0] + ".txt"
 
-            if not os.path.exists(json_path):
+            if not os.path.exists(yolo_label_file_path):
                 continue
 
-            with open(json_path, "r", encoding="utf-8") as f:
-                metadata = json.load(f)
-
+            _, yolo_bbox = read_yolo_label_file(yolo_label_file_path)
             image = Image.open(image_path)
-            bbox = Bbox(metadata["bbox"]["x"], metadata["bbox"]["y"], metadata["bbox"]["w"], metadata["bbox"]["h"])
+            bbox = yolo_bbox.to_coco_bbox(image.width, image.height)
             self.visualize_bbox_area(image, bbox)
 
 
@@ -364,7 +365,7 @@ def main():  # pylint: disable=missing-function-docstring
     processor.overlay_items_on_backgrounds(overlay_area=OVERLAYABLE_AREA, num_images_to_use=4, seed=SEED)
 
     # let's make sure it worked by plotting some images and their bbox
-    processor.plot_random_overlays_with_bboxes(num_images=5)
+    processor.plot_random_overlays_with_bboxes(num_images=10)
 
 
 if __name__ == "__main__":

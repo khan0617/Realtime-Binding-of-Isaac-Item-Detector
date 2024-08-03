@@ -1,4 +1,4 @@
-from image_processing.bbox import Bbox
+from image_processing.bbox import CocoBbox
 
 WIKI_HOMEPAGE_ROOT = "https://bindingofisaacrebirth.fandom.com/"
 WIKI_ITEMS_HOMEPAGE = "https://bindingofisaacrebirth.fandom.com/wiki/Items"
@@ -20,4 +20,4 @@ SEED = 39  # おかしいミク番号w
 
 # the isaac item images should only be randomly placed with the area this box represents
 # I used ImageOverlayProcessor.visualize_overlayable_area(...) with various combos to find this
-OVERLAYABLE_AREA = Bbox(115, 105, 770, 415)
+OVERLAYABLE_AREA = CocoBbox(115, 105, 770, 415)

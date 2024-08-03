@@ -322,7 +322,7 @@ class DataAugmentor:
 
 
 def main() -> None:  # pylint: disable=missing-function-docstring
-    # example usage. We'll apply every augmentation to the "1up!" item.
+    # example usage. We'll apply every augmentation to the "8_Inch_Nails" item.
     item_name = "8_Inch_Nails"
     image_path = os.path.join(DATA_DIR, item_name, UNMODIFIED_FILE_NAME)
     output_dir = os.path.join("new_dir", item_name)
