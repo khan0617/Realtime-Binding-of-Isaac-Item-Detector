@@ -348,7 +348,7 @@ class ImageOverlayProcessor:
             self.visualize_bbox_area(image, bbox)
 
 
-def main():  # pylint: disable=missing-function-docstring
+def main():
     # example usage, instantiate a processor:
     processor = ImageOverlayProcessor(
         data_dir=DATA_DIR, background_dir=BACKGROUND_DIR, item_dir=ITEM_DIR, output_dir=OVERLAY_DIR

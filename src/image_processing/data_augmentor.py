@@ -225,7 +225,7 @@ class DataAugmentor:
         else:  # RGB image
             noise = np.random.normal(0, 255 * noise_level, image.shape)
             noisy_image = np.clip(image + noise, 0, 255).astype(np.uint8)
-            return noisy_image
+            return noisy_image  # type: ignore
 
     @staticmethod
     def _vertical_flip(image: np.ndarray) -> np.ndarray:
@@ -323,7 +323,7 @@ class DataAugmentor:
         return np.asarray(filtered_image)
 
 
-def main() -> None:  # pylint: disable=missing-function-docstring
+def main() -> None:
     # example usage. We'll apply every augmentation to the "8_Inch_Nails" item.
     item_name = "8_Inch_Nails"
     image_path = os.path.join(DATA_DIR, item_name, UNMODIFIED_FILE_NAME)

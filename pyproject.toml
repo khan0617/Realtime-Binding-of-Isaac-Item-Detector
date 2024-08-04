@@ -33,6 +33,7 @@ dependencies = [
     "torchaudio",
     "ultralytics",
     "numpy",
+    "ipykernel",
 ]
 
 [project.urls]
@@ -103,7 +104,8 @@ src_paths = ["src/"]
 max-line-length = 120
 min-similarity-lines = 4
 disable = [
-    "missing-module-docstring"
+    "missing-module-docstring",
+    "missing-function-docstring"
 ]
 output-format = "colorized"
 ignore = [

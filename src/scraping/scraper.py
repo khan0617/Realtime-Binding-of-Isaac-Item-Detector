@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 import requests
 from bs4 import BeautifulSoup
 from bs4.element import Tag
+from tqdm import tqdm
 
 from constants import (
     BROKEN_SHOVEL_ACTIVE_ID,
@@ -237,7 +238,13 @@ class Scraper:
         logger.info("download_item_images: Downloading images, this may take a while...")
         if parallel:
             with ThreadPoolExecutor() as executor:
-                executor.map(lambda item: Scraper._download_item_image(item, full_item_dir), isaac_items)
+                list(
+                    tqdm(
+                        executor.map(lambda item: Scraper._download_item_image(item, full_item_dir), isaac_items),
+                        desc="Downloading (multi-threaded)",
+                        total=len(isaac_items),
+                    )
+                )
         else:
             for item in isaac_items:
                 Scraper._download_item_image(item, full_item_dir)

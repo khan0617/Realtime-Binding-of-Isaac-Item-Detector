@@ -17,6 +17,7 @@ LOG_FILENAME = "app.log"
 TARGET_BACKGROUND_SIZE = (1000, 625)
 ISAAC_ITEM_SCALE_FACTOR = 2.5
 SEED = 39  # おかしいミク番号w
+NUM_IMAGES_TO_USE_DURING_OVERLAY = 4
 
 # the isaac item images should only be randomly placed with the area this box represents
 # I used ImageOverlayProcessor.visualize_overlayable_area(...) with various combos to find this
