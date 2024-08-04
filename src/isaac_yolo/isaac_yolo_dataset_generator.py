@@ -10,7 +10,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
-import yaml  # type: ignore
+import yaml
 from tqdm import tqdm
 
 from constants import (
@@ -27,6 +27,7 @@ from constants import (
     YOLO_DATASET_VALID_DIR,
 )
 from logging_config import configure_logging
+from utils import get_id_name_mapping
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -227,40 +228,44 @@ def delete_overlays_dir(overlays_dir: str) -> None:
     try:
         shutil.rmtree(overlays_dir)
     except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.error("delete_overlays_dir: Failed to delete %s: %s", overlays_dir, str(e))
+        logger.error(
+            "delete_overlays_dir: Couldn't delete %s (maybe you already deleted it?): %s", overlays_dir, str(e)
+        )
         sys.exit(1)
     logger.info("delete_overlays_dir: Done! Deleted %s.", overlays_dir)
 
 
-def generate_yolo_yaml_config(
-    root_dir: str, train_dir: str, valid_dir: str, test_dir: str, names: dict[int, str]
-) -> None:
+def generate_yolo_yaml_config(root_dir: str, image_dir: str, train_dir: str, valid_dir: str, test_dir: str) -> None:
     """
     Generate a YOLO configuration file in YAML format.
+    The "data.yaml" file will be created in root_dir/.
+
+    See: https://docs.ultralytics.com/datasets/detect/#ultralytics-yolo-format
 
     Args:
         root_dir (str): The root directory of the YOLO dataset. Ex. "yolo_isaac_dataset"
+        image_dir: (str): The name of the directory holding images in root_dir. Ex: "images"
         train_dir (str): The directory containing training images. Ex: "train"
         valid_dir (str): The directory containing validation images. Ex: "valid"
         test_dir (str): The directory containing test images. Ex: "test"
-        names (dict[int, str]): Map of class id: classname. Ex: {145: "Guppy's Head", ...}
     """
+    name_id_map = get_id_name_mapping()
     config = {
         "path": root_dir,
-        "train": os.path.join(root_dir, YOLO_DATASET_IMAGE_DIR, train_dir),
-        "val": os.path.join(root_dir, YOLO_DATASET_IMAGE_DIR, valid_dir),
-        "test": os.path.join(root_dir, YOLO_DATASET_IMAGE_DIR, test_dir),
-        "names": names,
+        "train": os.path.join(root_dir, image_dir, train_dir),
+        "val": os.path.join(root_dir, image_dir, valid_dir),
+        "test": os.path.join(root_dir, image_dir, test_dir),
+        "names": name_id_map,
     }
 
     with open(os.path.join(root_dir, "dataset.yaml"), "w", encoding="utf-8") as f:
-        yaml.dump(config, f)
+        yaml.dump(config, f, sort_keys=False)
 
     logger.info("generate_yolo_yaml_config: Generated YOLO config file at %s", os.path.join(root_dir, "dataset.yaml"))
 
 
 def main() -> None:  # pylint: disable=missing-function-docstring
-    # example usage: create the necessary directories
+    # example usage: 1st create the necessary directories
     create_dataset_directories(root_dir=YOLO_DATASET_ROOT)
 
     # collect all image/label pairs then split them into train/valid/test
@@ -274,8 +279,17 @@ def main() -> None:  # pylint: disable=missing-function-docstring
     copy_files_to_yolo_dataset(valid_pairs, YOLO_DATASET_VALID_DIR, YOLO_DATASET_ROOT)
     copy_files_to_yolo_dataset(test_pairs, YOLO_DATASET_TEST_DIR, YOLO_DATASET_ROOT)
 
-    # optional, to save space:
+    # optional, to save space we can delete the original dataset
     delete_overlays_dir(os.path.join(DATA_DIR, OVERLAY_DIR))
+
+    # finally, generate the .yaml file which the yolo model needs
+    generate_yolo_yaml_config(
+        root_dir=YOLO_DATASET_ROOT,
+        image_dir=YOLO_DATASET_IMAGE_DIR,
+        train_dir=YOLO_DATASET_TRAIN_DIR,
+        valid_dir=YOLO_DATASET_VALID_DIR,
+        test_dir=YOLO_DATASET_TEST_DIR,
+    )
 
 
 if __name__ == "__main__":
