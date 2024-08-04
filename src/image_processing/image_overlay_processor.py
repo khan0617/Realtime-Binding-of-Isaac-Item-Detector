@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import random
@@ -21,13 +20,13 @@ from constants import (
 )
 from image_processing.bbox import CocoBbox, YoloBbox
 from logging_config import configure_logging
-from utils import convert_item_name_to_id, read_yolo_label_file
+from utils import read_yolo_label_file
 
 configure_logging()
 logger = logging.getLogger(__name__)
 
 
-def _save_overlay_metadata(output_path: str, item_name: str, bbox: YoloBbox) -> None:
+def _save_overlay_metadata(output_path: str, class_id: str, bbox: YoloBbox) -> None:
     """Save metadata for an item overlay as a .txt file in YOLO format.
 
     Each .txt label file consists of lines like: `<class_id> <x_center> <y_center> <width> <height>`
@@ -39,10 +38,9 @@ def _save_overlay_metadata(output_path: str, item_name: str, bbox: YoloBbox) -> 
 
     Args:
         output_path (str): The path to save the .txt file (must end in .txt).
-        item_name (str): The name of the item (likely url-encoded)
+        class_id (str): The class_id we'll to represent this item to the YOLO model.
         bbox (YoloBbox): The bounding box of the overlaid item.
     """
-    class_id = convert_item_name_to_id(item_name)
     metadata = f"{class_id} {bbox.x_center} {bbox.y_center} {bbox.width} {bbox.height}"
 
     with open(output_path, "w", encoding="utf-8") as f:
@@ -55,7 +53,7 @@ def _overlay_augmented_images_on_background(
     overlay_area: CocoBbox,
     background: Image.Image,
     item_paths: list[str],
-    item_name: str,
+    item_id_tail: str,
     background_name: str,
     full_output_dir: str,
 ) -> None:
@@ -65,7 +63,7 @@ def _overlay_augmented_images_on_background(
         overlay_area (CocoBbox): The bounding box area within which items can be overlaid.
         background (PIL.Image.Image): The background image onto which items will be overlaid.
         item_paths (List[str]): List of complete file paths to augmented item images.
-        item_name (str): The name of the item being overlaid. The name is likely url-encoded (ex. "A_Pony")
+        item_id_tail (str): Tail of the item id, such as "145" for Guppy's Head (which is item 5.100.145).
         background_name (str): The name of the background being used. (ex. "Library_7")
         full_output_dir (str): The output directory of these overlayed images (ex: "data/overlays")
     """
@@ -89,7 +87,7 @@ def _overlay_augmented_images_on_background(
 
         # generate the output filename
         output_filename = (
-            f"{item_name}_"  # ex. "A_Pony_"
+            f"{item_id_tail}_"  # ex. "145_"
             f"{os.path.splitext(os.path.basename(item_path))[0]}.jpg"  # ex. "rotate_flip_1234.jpg"
         )
 
@@ -103,7 +101,7 @@ def _overlay_augmented_images_on_background(
         logger.debug("_overlay_augmented_images_on_background: Saved overlayed image: %s", output_path)
         _save_overlay_metadata(
             output_path=f"{os.path.splitext(output_path)[0]}.txt",  # remove ".jpg" from the end and make it ".txt"
-            item_name=item_name,
+            class_id=item_id_tail,
             bbox=item_bbox.to_yolo_bbox(background_copy.width, background_copy.height),
         )
 
@@ -131,14 +129,14 @@ def _overlay_worker(
         full_background_dir (str): The directory containing background images. (ex. data/isaac_backgrounds)
         full_output_dir (str): The directory where processed images will be saved. (ex. data/overlays)
     """
-
     # full_background_path is like "data/isaac_backgrounds/Library_7.jpg"
     full_background_path = os.path.join(full_background_dir, background_file)
     background_img = Image.open(full_background_path)
 
+    # items are represented by the tail of their item id, these are just numbers like "145".
     item_dirs = os.listdir(full_item_dir)
     for item_dir in item_dirs:
-        # concatenated_item_dir is like 'data/items/Guppy's Head/'
+        # concatenated_item_dir is like 'data/items/145/'
         concatenated_item_dir = os.path.join(full_item_dir, item_dir)
 
         # fmt: off
@@ -158,7 +156,7 @@ def _overlay_worker(
             overlay_area=overlay_area,
             background=background_img,
             item_paths=subset_of_image_paths,
-            item_name=item_dir,
+            item_id_tail=item_dir,
             background_name=os.path.splitext(background_file)[0],
             full_output_dir=full_output_dir,
         )
@@ -180,7 +178,7 @@ class ImageOverlayProcessor:
                 background_dir='backgrounds',
                 item_dir='items',
                 output_dir='overlays'
-            )`
+        )`
 
         This constructor represents data/backgrounds/ (must exist), data/items/ (must exist),
             and 'data/overlays/' (will be created in this class)
@@ -272,7 +270,7 @@ class ImageOverlayProcessor:
             num_images_to_use (int): The number of images to use for each item per background (randomly selected).
             seed (int, optional): Seed the randomizer for placing images on backgrounds.
         """
-        # Check if the output directory already contains subdirectories
+        # Check if the output directory already contains subdirectories like overlays/Library_7/ etc.
         sub_dirs_in_full_output_dir = [
             f for f in os.listdir(self._full_output_dir) if os.path.isdir(os.path.join(self._full_output_dir, f))
         ]
@@ -320,7 +318,7 @@ class ImageOverlayProcessor:
 
         Note: Since the bboxes are stored in .txt files
 
-        So we could plot 1 image from A_Pony/, 1 from 3_Dollar_Bill/, and so on.
+        So we could plot 1 image from 145/, 1 from 72/, and so on.
 
         Args:
             num_images (int): The number of images to plot.

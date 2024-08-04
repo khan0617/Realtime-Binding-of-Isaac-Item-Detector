@@ -15,6 +15,7 @@ configure_logging()
 logger = logging.getLogger(__name__)
 
 
+# TODO: refactor this eventually so it's not a class with all static methods. Just make these functions, like scraper.py
 class DataAugmentor:
     """DataAugmentor provides augmentations on the Isaac Item Images to increase our dataset size."""
 
@@ -35,6 +36,7 @@ class DataAugmentor:
         Args:
             image_path (str): The file path of the original image to be augmented.
             output_dir (str): The directory where the augmented images will be saved. The directory will be created if it doesn't exist.
+                Ex: "data/items/145"
             augmentations (Iterable[Union[Augmentation, Iterable[Augmentation]]], optional): An iterable of Augmentation or Iterables of
                 Augmentations specifying which augmentations to apply. If None, a default set of all augmentations is applied.
                 Ex: If you pass in `[(Augmentation.ROTATE, Augmentation.FLIP), Augmentation.NOISE]`, for the first tuple,

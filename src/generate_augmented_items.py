@@ -83,11 +83,11 @@ def _augment_item_image(
         aug_subsets (list[tuple[Augmentation]]): List of augmentation combinations to apply.
         num_augmented (int): Number of augmented images to generate per combination.
         full_item_dir (str): The directory containing folders for each item.
-            I.e. if full_item_dir == "data/items/", then we should have data/items/A_Pony/, data/items/Guppy's Head/, etc.
+            I.e. if full_item_dir == "data/items/", then we should have data/items/145/, data/items/72/, etc.
         seed (int): A seed to observe reproducible results when running augment_image() repeatedly.
     """
-    output_dir = os.path.join(full_item_dir, item.img_dir)
-    image_path = os.path.join(full_item_dir, item.img_dir, UNMODIFIED_FILE_NAME)
+    output_dir = os.path.join(full_item_dir, item.get_image_id_tail())
+    image_path = os.path.join(output_dir, UNMODIFIED_FILE_NAME)
     if not os.path.exists(image_path):
         logger.warning("Image not found for item: %s, expected at: %s", item.name, image_path)
         return

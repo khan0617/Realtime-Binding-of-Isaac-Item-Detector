@@ -1,6 +1,7 @@
 # ignore the cached html pages
 scraper_cache/
-data/
+data/overlays/
+data/isaac_backgrounds/
 *.json
 *.png
 
