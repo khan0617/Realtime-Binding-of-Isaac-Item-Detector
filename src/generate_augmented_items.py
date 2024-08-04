@@ -167,8 +167,8 @@ def main() -> None:
     - `--no_confirm` If set, skip the confirmation step when using all defaults.
 
     Example usage:
-        \n`python generate_dataset.py --num_augmented 5 --seed 123 --max_subset_size 3 --data_dir my_data`
-        \n`python generate_dataset.py --no_confirm` (use all defaults and skip the confirmation step)
+        \n`python generate_augmented_items.py --num_augmented 5 --seed 123 --max_subset_size 3 --data_dir my_data`
+        \n`python generate_augmented_items.py --no_confirm` (use all defaults and skip the confirmation step)
     """
     # fmt: off
     parser = argparse.ArgumentParser(
