@@ -7,7 +7,7 @@ from collections.abc import Iterable
 import numpy as np
 from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 
-from constants import DATA_DIR, UNMODIFIED_FILE_NAME
+from constants import DATA_DIR, SEED, UNMODIFIED_FILE_NAME
 from image_processing.augmentation import Augmentation
 from logging_config import configure_logging
 
@@ -330,7 +330,7 @@ def main() -> None:  # pylint: disable=missing-function-docstring
     output_dir = os.path.join("new_dir", item_name)
 
     # produce 1 image for each augmentation.
-    DataAugmentor.augment_image(image_path, output_dir, num_augmented=1, seed=39)
+    DataAugmentor.augment_image(image_path, output_dir, num_augmented=1, seed=SEED)
 
 
 if __name__ == "__main__":

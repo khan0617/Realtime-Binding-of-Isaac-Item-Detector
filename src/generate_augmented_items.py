@@ -5,6 +5,8 @@ from collections.abc import Iterable
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from itertools import chain, combinations, repeat
 
+from tqdm import tqdm
+
 from constants import DATA_DIR as _DATA_DIR  # I redefine a DEFAULT_DATA_DIR here and don't want to mix them up
 from constants import ITEM_DIR, JSON_DUMP_FILE
 from constants import SEED as _SEED
@@ -136,7 +138,11 @@ def _clean_data_dir(full_item_dir: str) -> None:
     # fmt: on
 
     with ThreadPoolExecutor() as executor:
-        executor.map(_delete_augmented_images_from_item_dir, subdirs)
+        list(
+            tqdm(
+                executor.map(_delete_augmented_images_from_item_dir, subdirs), desc="Removing files", total=len(subdirs)
+            )
+        )
     logger.info("clean_data_dir: Done! Removed augmented images from: %s/", full_item_dir)
 
 
@@ -220,13 +226,19 @@ def main() -> None:
     # generate all the data augmentations in parallel
     logger.info("main: Generating augmentations, this may take a while...")
     with ProcessPoolExecutor() as executor:
-        executor.map(
-            _augment_item_image,
-            isaac_items,
-            repeat(aug_subsets),
-            repeat(args.num_augmented),
-            repeat(full_item_dir),
-            repeat(args.seed),
+        list(
+            tqdm(
+                executor.map(
+                    _augment_item_image,
+                    isaac_items,
+                    repeat(aug_subsets),
+                    repeat(args.num_augmented),
+                    repeat(full_item_dir),
+                    repeat(args.seed),
+                ),
+                desc="Augmenting (Multi-processing)",
+                total=len(isaac_items),
+            )
         )
     logger.info("main: Done augmenting images!")
 

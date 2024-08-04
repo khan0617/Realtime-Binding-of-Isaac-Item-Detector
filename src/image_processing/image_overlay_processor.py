@@ -7,17 +7,9 @@ from itertools import repeat
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 from PIL import Image, ImageFile, ImageOps
+from tqdm import tqdm
 
-from constants import (
-    BACKGROUND_DIR,
-    DATA_DIR,
-    ISAAC_ITEM_SCALE_FACTOR,
-    ITEM_DIR,
-    OVERLAY_DIR,
-    OVERLAYABLE_AREA,
-    SEED,
-    TARGET_BACKGROUND_SIZE,
-)
+from constants import BACKGROUND_DIR, DATA_DIR, ISAAC_ITEM_SCALE_FACTOR, ITEM_DIR, OVERLAY_DIR, OVERLAYABLE_AREA, SEED
 from image_processing.bbox import CocoBbox, YoloBbox
 from logging_config import configure_logging
 from utils import read_yolo_label_file
@@ -87,6 +79,7 @@ def _overlay_augmented_images_on_background(
 
         # generate the output filename
         output_filename = (
+            f"{background_name}_"  # ex. "Library_7_"
             f"{item_id_tail}_"  # ex. "145_"
             f"{os.path.splitext(os.path.basename(item_path))[0]}.jpg"  # ex. "rotate_flip_1234.jpg"
         )
@@ -297,16 +290,21 @@ class ImageOverlayProcessor:
 
         # paralellize: each process will handle all the overlays for one background
         with ProcessPoolExecutor() as executor:
-            executor.map(
-                _overlay_worker,
-                backgrounds,
-                repeat(overlay_area),
-                repeat(num_images_to_use),
-                repeat(self._full_item_dir),
-                repeat(self._full_background_dir),
-                repeat(self._full_output_dir),
+            list(
+                tqdm(
+                    executor.map(
+                        _overlay_worker,
+                        backgrounds,
+                        repeat(overlay_area),
+                        repeat(num_images_to_use),
+                        repeat(self._full_item_dir),
+                        repeat(self._full_background_dir),
+                        repeat(self._full_output_dir),
+                    ),
+                    desc="Overlaying images (Multi-processing)",
+                    total=len(backgrounds),
+                )
             )
-
         logger.info("overlay_items_on_backgrounds: Done! Overlaid items onto backgrounds.")
 
     def plot_random_overlays_with_bboxes(self, num_images: int = 5, seed: int | None = None) -> None:
@@ -363,7 +361,7 @@ def main():  # pylint: disable=missing-function-docstring
     processor.overlay_items_on_backgrounds(overlay_area=OVERLAYABLE_AREA, num_images_to_use=4, seed=SEED)
 
     # let's make sure it worked by plotting some images and their bbox
-    processor.plot_random_overlays_with_bboxes(num_images=10)
+    processor.plot_random_overlays_with_bboxes(num_images=3)
 
 
 if __name__ == "__main__":

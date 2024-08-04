@@ -11,6 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
 import yaml  # type: ignore
+from tqdm import tqdm
 
 from constants import (
     DATA_DIR,
@@ -108,7 +109,7 @@ def get_image_label_file_pairs(overlays_dir: str) -> list[ImageLabelPair]:
     Returns:
         list[ImageLabelPair]: The list of all (image_path, label_path) filename tuples.
     """
-    logger.info("get_image_label_file_pairs: Generating pairs...")
+    logger.info("get_image_label_file_pairs: Generating pairs from %s...", overlays_dir)
     image_label_pairs: list[ImageLabelPair] = []
     for root, _, files in os.walk(overlays_dir):
         for file in files:
@@ -128,7 +129,7 @@ def get_image_label_file_pairs(overlays_dir: str) -> list[ImageLabelPair]:
 
 
 def split_dataset(
-    pairs: list[ImageLabelPair], train_ratio: float, valid_ratio: float, test_ratio: float
+    pairs: list[ImageLabelPair], train_ratio: float, valid_ratio: float, test_ratio: float, seed: int | None = None
 ) -> tuple[list[ImageLabelPair], list[ImageLabelPair], list[ImageLabelPair]]:
     """
     Split the dataset into training, validation, and test sets.
@@ -138,13 +139,14 @@ def split_dataset(
         train_ratio (float): The ratio of the training set.
         valid_ratio (float): The ratio of the validation set.
         test_ratio (float): The ratio of the test set.
+        seed (int, optional): Seed for random shuffling of the pairs.
 
     Returns:
         tuple: Three lists containing the training, validation, and test pairs respectively.
     """
     logger.info("split_dataset: Splitting dataset into train/valid/test...")
     assert train_ratio + valid_ratio + test_ratio == 1, "train, valid, and test ratios must sum to 1"
-
+    random.seed(seed)
     random.shuffle(pairs)
     num_total = len(pairs)
     num_train = int(num_total * train_ratio)
@@ -208,46 +210,26 @@ def copy_files_to_yolo_dataset(pairs: list[ImageLabelPair], split_name: str, roo
             sys.exit(1)
 
     with ThreadPoolExecutor() as executor:
-        executor.map(copy_helper, pairs)
+        list(tqdm(executor.map(copy_helper, pairs), desc="Copying images/labels (multi-threaded)", total=len(pairs)))
 
     logger.info("copy_files_to_yolo_dataset: Done! Copied %d pairs to %s", len(pairs), split_name)
 
 
-# def move_files_to_yolo_dataset(pairs: list[ImageLabelPair], split_name: str, root_dir: str) -> None:
-#     """
-#     Copy image and label files to their respective directories in the YOLO dataset.
+def delete_overlays_dir(overlays_dir: str) -> None:
+    """Delete overlays_dir.
 
-#     IMPORTANT: This consumes the items from pairs. Meaning that pair.image_path, pair.label_path will
-#     no longer exist. They are moved into the new directory. This is done to save space.
+    Irreversible, make sure you have called copy_files_to_yolo_dataset(...) beforehand!
 
-#     Args:
-#         pairs (list[ImageLabelPair]): The list of image/label pairs to move.
-#         split_name (str): The name of the dataset split ('train', 'valid', or 'test').
-#         root_dir (str): The root directory of the YOLO dataset, ex: "yolo_isaac_dataset"
-#     """
-#     full_image_dir = os.path.join(root_dir, YOLO_DATASET_IMAGE_DIR, split_name)
-#     full_label_dir = os.path.join(root_dir, YOLO_DATASET_LABEL_DIR, split_name)
-#     logger.info("move_files_to_yolo_dataset: Moving files to %s...", split_name)
-
-#     def move_helper(pair: ImageLabelPair) -> None:
-#         try:
-#             shutil.move(pair.image_path, full_image_dir)
-#             shutil.move(pair.label_path, full_label_dir)
-#         except Exception as e:  # pylint: disable=broad-exception-caught
-#             logger.error(
-#                 "Failed to move either %s or %s to %s or %s: %s!",
-#                 pair.image_path,
-#                 pair.label_path,
-#                 full_image_dir,
-#                 full_label_dir,
-#                 str(e),
-#             )
-#             sys.exit(1)
-
-#     with ThreadPoolExecutor() as executor:
-#         executor.map(move_helper, pairs)
-
-#     logger.info("move_files_to_yolo_dataset: Done! Moved %d pairs to %s", len(pairs), split_name)
+    Args:
+        overlays_dir (str): Full path to the overlays directory. Ex: data/overlays
+    """
+    logger.info("delete_overlays_dir: Deleting %s...", overlays_dir)
+    try:
+        shutil.rmtree(overlays_dir)
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.error("delete_overlays_dir: Failed to delete %s: %s", overlays_dir, str(e))
+        sys.exit(1)
+    logger.info("delete_overlays_dir: Done! Deleted %s.", overlays_dir)
 
 
 def generate_yolo_yaml_config(
@@ -288,9 +270,12 @@ def main() -> None:  # pylint: disable=missing-function-docstring
     )
 
     # move files to their new respective directories
-    # move_files_to_yolo_dataset(train_pairs, YOLO_DATASET_TRAIN_DIR, YOLO_DATASET_ROOT)
-    # move_files_to_yolo_dataset(valid_pairs, YOLO_DATASET_VALID_DIR, YOLO_DATASET_ROOT)
-    # move_files_to_yolo_dataset(test_pairs, YOLO_DATASET_TEST_DIR, YOLO_DATASET_ROOT)
+    copy_files_to_yolo_dataset(train_pairs, YOLO_DATASET_TRAIN_DIR, YOLO_DATASET_ROOT)
+    copy_files_to_yolo_dataset(valid_pairs, YOLO_DATASET_VALID_DIR, YOLO_DATASET_ROOT)
+    copy_files_to_yolo_dataset(test_pairs, YOLO_DATASET_TEST_DIR, YOLO_DATASET_ROOT)
+
+    # optional, to save space:
+    delete_overlays_dir(os.path.join(DATA_DIR, OVERLAY_DIR))
 
 
 if __name__ == "__main__":
