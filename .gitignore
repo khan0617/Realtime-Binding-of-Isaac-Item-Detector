@@ -2,6 +2,7 @@
 scraper_cache/
 data/overlays/
 data/isaac_backgrounds/
+yolo_isaac_dataset/
 *.json
 *.png
 

@@ -21,3 +21,14 @@ SEED = 39  # おかしいミク番号w
 # the isaac item images should only be randomly placed with the area this box represents
 # I used ImageOverlayProcessor.visualize_overlayable_area(...) with various combos to find this
 OVERLAYABLE_AREA = CocoBbox(115, 105, 770, 415)
+
+YOLO_DATASET_ROOT = "yolo_isaac_dataset"
+YOLO_DATASET_IMAGE_DIR = "images"
+YOLO_DATASET_LABEL_DIR = "labels"
+YOLO_DATASET_TRAIN_DIR = "train"
+YOLO_DATASET_VALID_DIR = "valid"
+YOLO_DATASET_TEST_DIR = "test"
+
+TRAIN_RATIO = 0.8
+VALID_RATIO = 0.1
+TEST_RATIO = 0.1
