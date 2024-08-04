@@ -33,13 +33,7 @@ class IsaacItem:
 
     # each item has a unique wiki URL (EXCEPT the Broken Shovel items), this is the end of that URL. ex for "???'s Only Friend":
     # "%3F%3F%3F%27s_Only_Friend"
-    # this should be unique to the item. so we can use it as a key for json / directories etc.
     url_encoded_name: str
-
-    # unique image directory; where all the images for this item are stored.
-    # this does NOT include the overall DATA_DIR. So to access the image you likely need to do:
-    # {DATA_DIR}/{ITEMS_DIR}/item's_name/... images here ...
-    img_dir: str
 
     def to_dict(self) -> dict:
         """Get the dictionary reprentation of the IsaacItem dataclass."""
@@ -49,3 +43,7 @@ class IsaacItem:
     def from_dict(cls, d: dict[str, str]) -> IsaacItem:
         """Build an IsaacItem from the provided dictionary."""
         return cls(**d)
+
+    def get_image_id_tail(self) -> str:
+        """For an item ID like 5.100.145, return "145"."""
+        return self.item_id.split(".")[-1]

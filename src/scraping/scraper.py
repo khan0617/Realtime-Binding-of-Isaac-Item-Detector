@@ -28,6 +28,8 @@ configure_logging()
 logger = logging.getLogger(__name__)
 
 
+# TODO: refactor code so we don't need `Scraper` class since all methods are static.
+# not good to use it as a namespace like that.
 class Scraper:
     """
     Scraper is responsible for collecting all Isaac item info we need from the Wiki's HTML.
@@ -121,6 +123,12 @@ class Scraper:
             # 1st parse the item name and link to the Wiki page, such as "Guppy's Head"
             name_td = all_tds[0]
             name = name_td.find("a").text.strip()
+
+            # "Tonsil" item shares item ID "5.100.474" with "Broekn Glass Cannon"
+            # this item was removed in repentence so we're just gonna skip this
+            if "tonsil" in name.lower():
+                continue
+
             relative_wiki_url = name_td.find("a")["href"]
 
             # parse the item id
@@ -158,12 +166,6 @@ class Scraper:
             elif item_id == BROKEN_SHOVEL_PASSIVE_ID:
                 name = "Broken Shovel (Passive)"
 
-            if item_id in [BROKEN_SHOVEL_PASSIVE_ID, BROKEN_SHOVEL_ACTIVE_ID]:
-                # doing this lets us have 2 unique dirs for the broken shovel items
-                img_dir = name
-            else:
-                img_dir = url_encoded_name
-
             isaac_items.append(
                 IsaacItem(
                     name=name,
@@ -174,7 +176,6 @@ class Scraper:
                     item_quality=item_quality,
                     quote=quote,
                     url_encoded_name=url_encoded_name,
-                    img_dir=img_dir,
                 )
             )
 
@@ -188,15 +189,15 @@ class Scraper:
     def _download_item_image(isaac_item: IsaacItem, full_item_dir: str) -> None:
         """Threadpool helper: Downloads the image for this IsaacItem and saves it to the specified directory.
 
-        All item images will be downloaded into {full_item_dir}/Guppy's Head/UNMODIFIED_FILE_NAME.
-        Ex: The image for "Guppy's Head" will be like: {full_item_dir}/Guppy's Head/UNMODIFIED_FILE_NAME.
+        All item images will be downloaded into {full_item_dir}/item_id/UNMODIFIED_FILE_NAME.
+        Ex: The image for "Guppy's Head" will be like: {full_item_dir}/145/UNMODIFIED_FILE_NAME.
 
         Args:
             isaac_item (IsaacItem): The IsaacItem we want to download an image for.
             full_item_dir (str): The full path for where items will be stored. Ex: "data/items/".
         """
         # define the directory and file path using the encoded name
-        this_item_data_dir = os.path.join(full_item_dir, isaac_item.img_dir)
+        this_item_data_dir = os.path.join(full_item_dir, isaac_item.get_image_id_tail())
         save_path = os.path.join(this_item_data_dir, UNMODIFIED_FILE_NAME)
 
         # make sure the destination directory exists
@@ -243,52 +244,22 @@ class Scraper:
         logger.info("download_item_images: Done downloading images!")
 
     @staticmethod
-    def _find_imgs_that_failed_to_download(
-        isaac_items: list[IsaacItem], data_dir: str, item_dir: str
-    ) -> list[IsaacItem]:
-        """Compare the data_dir and isaac_items and get a list of which images failed to download.
-
-        This method assumes that data_dir organizes item images as follows: {data_dir}/{item_dir}/{item_name}/original_img.png.
-        Ex. data/items/Guppy's Head/original_img.png.
-
-        Args:
-            isaac_items (List[IsaacItem]): A list of IsaacItems.
-            data_dir (str): Root directory where image folders are stored.
-            item_dir (str): Subdirectory within data_dir for item images.
-
-        Returns:
-            List[IsaacItem]: A list of IsaacItems which do not have a downloaded image.
-            Ex. if we return [IsaacItem("Guppy's Head", ...)], then {data_dir}/{item_dir}/Guppy's Head/original_img.png does not exist.
-            All other items had their images downloaded successfully.
-        """
-        # get the list of directories in the item_dir directory
-        item_dirs = set(os.listdir(os.path.join(data_dir, item_dir)))
-
-        missing_items = []
-        for item in isaac_items:
-            if item.name not in item_dirs and item.url_encoded_name not in item_dirs:
-                missing_items.append(item)
-
-        logger.info("find_imgs_that_failed_to_download: found %d missing images!", len(missing_items))
-        return missing_items
-
-    @staticmethod
     def dump_item_data_to_json(isaac_items: list[IsaacItem], filename: str) -> None:
         """Write the dictionary representation for each item into the specified filename.
 
         In the JSON file, each object is represented as follows.
-        `<isaac_item.img_dir>: {... the rest of the object ...}`
+        `<isaac_item.get_image_id_tail()>: {... the whole object ...}`
 
         Args:
             isaac_items (list[IsaacItem]): The IsaacItems to dump to the file.
             filename (str): Where to save the json file.
         """
+        isaac_items.sort(key=lambda x: int(x.get_image_id_tail()))
         with open(filename, "w", encoding="utf-8") as f:
             data = {}
             for item in isaac_items:
-                item_as_dict: dict[str, str] = item.to_dict()
-                img_dir = item_as_dict.pop("img_dir")
-                data[img_dir] = item_as_dict
+                item_id_tail = item.get_image_id_tail()
+                data[item_id_tail] = item.to_dict()
 
             json.dump(data, f, indent=4)
             logger.info("dump_item_data_to_json: Successfully created %s", filename)
@@ -297,9 +268,9 @@ class Scraper:
     def get_isaac_items_from_json(filename: str) -> list[IsaacItem] | None:
         """Attempt to parse IsaacItems from the provided json filename.
 
-        Isaac items should be stored in the following example format (item's img_dir attr is the main key):
+        Isaac items should be stored in the following example format (item.get_image_id_tail() is the main key):
 
-        "Ventricle_Razor": {
+        "396": {
             "name": "Ventricle Razor",
             "item_id": "5.100.396",
             "img_url": "https://static.wikia.nocookie.net/bindingofisaacre_gamepedia/images/9/97/Collectible_Ventricle_Razor_icon.png/revision/latest?cb=20210821162403",
@@ -321,9 +292,7 @@ class Scraper:
             with open(filename, "r", encoding="utf-8") as f:
                 data: dict[str, dict[str, str]] = json.load(f)
 
-                # add the img_dir key back into the dict then create an isaac item.
-                for img_dir, item_data in data.items():
-                    item_data.update({"img_dir": img_dir})
+                for _, item_data in data.items():
                     isaac_items.append(IsaacItem.from_dict(item_data))
 
                 logger.info("get_isaac_items_from_json: Parsed %d IsaacItems from %s", len(isaac_items), filename)
@@ -349,9 +318,13 @@ def main() -> None:  # pylint: disable=missing-function-docstring
 
     # we can even compare the two lists and make sure they're the same after sorting
     if isaac_items_from_json is not None:
-        isaac_items_from_json.sort(key=lambda x: x.name)
-        isaac_items.sort(key=lambda x: x.name)
-        assert isaac_items == isaac_items_from_json  # this works because dataclass implements __eq__ for us.
+        isaac_items_from_json.sort(key=lambda x: x.item_id)
+        isaac_items.sort(key=lambda x: x.item_id)
+
+        # this works because dataclass implements __eq__ for us.
+        assert (
+            isaac_items == isaac_items_from_json
+        ), "isaac_items from html and isaac_items_from_json should be equivalent."
 
 
 if __name__ == "__main__":
