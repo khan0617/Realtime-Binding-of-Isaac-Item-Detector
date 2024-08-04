@@ -23,12 +23,16 @@ maintainers = [
 ]
 
 dependencies = [
-    "requests>=2",
-    "beautifulsoup4>=4",
-    "opencv-python>=4.10",
-    "numpy>=2.0.1",
-    "pillow>=10.4",
-    "matplotlib>=3.9.1"
+    "requests",
+    "beautifulsoup4",
+    "opencv-python",
+    "pillow",
+    "matplotlib",
+    "torch",
+    "torchvision",
+    "torchaudio",
+    "ultralytics",
+    "numpy",
 ]
 
 [project.urls]
@@ -70,6 +74,12 @@ dev = [
     # types for requests library for mypy
     "types-requests",
 
+    # types for yaml
+    "types-PyYAML",
+
+    # types for tqdm
+    "types-tqdm",
+
     # actions for pre commit hooks to run formatters, linters etc.
     # to configure the pre-commit hooks, run "pre-commit install"
     # this will add these hooks to the local .git file.
@@ -108,7 +118,7 @@ python_version = "3.11"
 warn_redundant_casts = true
 warn_return_any = true
 warn_unused_configs = true
-warn_unused_ignores = true
+warn_unused_ignores = false
 
 # Configuration for pytest
 # https://docs.pytest.org/en/latest/reference/customize.html#pyproject-toml
