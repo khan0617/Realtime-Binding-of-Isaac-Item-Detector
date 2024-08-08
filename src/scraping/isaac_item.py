@@ -35,6 +35,10 @@ class IsaacItem:
     # "%3F%3F%3F%27s_Only_Friend"
     url_encoded_name: str
 
+    # how we'll identify this class in the yolo model
+    # possible values are "0"-"718".
+    yolo_class_id: str
+
     def to_dict(self) -> dict:
         """Get the dictionary reprentation of the IsaacItem dataclass."""
         return asdict(self)

@@ -109,6 +109,8 @@ def parse_isaac_items_from_html(html: str) -> list[IsaacItem]:
     # each <tr> in the tables has the class "row-collectible".
     html_tr_elems: list[Tag] = soup.find_all("tr", {"class": "row-collectible"})
 
+    # we'll assign yolo class IDs to the order that the items show up in the HTML
+    yolo_class_id = 0
     isaac_items: list[IsaacItem] = []
     for tr in html_tr_elems:
         # the tables on the Isaac Items wiki page have columns laid out like this:
@@ -171,8 +173,11 @@ def parse_isaac_items_from_html(html: str) -> list[IsaacItem]:
                 item_quality=item_quality,
                 quote=quote,
                 url_encoded_name=url_encoded_name,
+                yolo_class_id=str(yolo_class_id),
             )
         )
+
+        yolo_class_id += 1
 
     logger.info(
         "parse_isaac_items_from_html: found %d IsaacItems",
@@ -279,7 +284,8 @@ def get_isaac_items_from_json(filename: str) -> list[IsaacItem] | None:
         "description": "Creates up to two portals that remain even if Isaac leaves the room. Upon entering a portal, Isaac is teleported to the other portal.",
         "item_quality": "1",
         "quote": "Short cutter",
-        "url_encoded_name": "Ventricle_Razor"
+        "url_encoded_name": "Ventricle_Razor",
+        "yolo_class_id": "91"
     },
 
     Args:

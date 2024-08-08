@@ -21,7 +21,7 @@ from constants import (
 )
 from image_processing.bbox import CocoBbox, YoloBbox
 from logging_config import configure_logging
-from utils import read_yolo_label_file
+from utils import get_yolo_class_id_from_item_id_tail, read_yolo_label_file
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -32,8 +32,7 @@ def _save_overlay_metadata(output_path: str, class_id: str, bbox: YoloBbox) -> N
 
     Each .txt label file consists of lines like: `<class_id> <x_center> <y_center> <width> <height>`
     If we had multiple items on screen we could supply multiple lines.
-    We will use the Isaac item id as the yolo class ID.
-    So for item_id "5.100.320", we'll use 320 (int) as the yolo class id.
+    We will use the IsaacItem.yolo_class_id id as the yolo class ID.
 
     Example: 0 0.48 0.63 0.69 0.71
 
@@ -103,7 +102,7 @@ def _overlay_augmented_images_on_background(
         logger.debug("_overlay_augmented_images_on_background: Saved overlayed image: %s", output_path)
         _save_overlay_metadata(
             output_path=f"{os.path.splitext(output_path)[0]}.txt",  # remove ".jpg" from the end and make it ".txt"
-            class_id=item_id_tail,
+            class_id=get_yolo_class_id_from_item_id_tail(item_id_tail),
             bbox=item_bbox.to_yolo_bbox(background_copy.width, background_copy.height),
         )
 

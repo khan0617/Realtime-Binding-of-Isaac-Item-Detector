@@ -23,12 +23,14 @@ NUM_IMAGES_TO_USE_DURING_OVERLAY = 4
 # I used ImageOverlayProcessor.visualize_overlayable_area(...) with various combos to find this
 OVERLAYABLE_AREA = CocoBbox(115, 105, 770, 415)
 
+OVERALL_DATASET_ROOT = "datasets"  # required for ultralytics yolo file hierarchy
 YOLO_DATASET_ROOT = "yolo_isaac_dataset"
 YOLO_DATASET_IMAGE_DIR = "images"
 YOLO_DATASET_LABEL_DIR = "labels"
 YOLO_DATASET_TRAIN_DIR = "train"
-YOLO_DATASET_VALID_DIR = "valid"
+YOLO_DATASET_VALID_DIR = "val"
 YOLO_DATASET_TEST_DIR = "test"
+YOLO_DATASET_YAML_FILE = "data.yaml"
 
 TRAIN_RATIO = 0.8
 VALID_RATIO = 0.1

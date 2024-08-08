@@ -15,6 +15,7 @@ from tqdm import tqdm
 
 from constants import (
     DATA_DIR,
+    OVERALL_DATASET_ROOT,
     OVERLAY_DIR,
     TEST_RATIO,
     TRAIN_RATIO,
@@ -25,6 +26,7 @@ from constants import (
     YOLO_DATASET_TEST_DIR,
     YOLO_DATASET_TRAIN_DIR,
     YOLO_DATASET_VALID_DIR,
+    YOLO_DATASET_YAML_FILE,
 )
 from logging_config import configure_logging
 from utils import get_id_name_mapping
@@ -51,30 +53,32 @@ def create_dataset_directories(root_dir: str) -> None:
 
     If root_dir == "yolo_isaac_dataset" then the final directory created will be like:
     .
-    └── yolo_isaac_dataset/
-        ├── images/
-        │   ├── train/
-        │   │   ├── img1.jpg
-        │   │   └── ...
-        │   ├── valid/
-        │   │   ├── img2.jpg
-        │   │   └── ...
-        │   └── test/
-        │       ├── img3.jpg
-        │       └── ..
-        └── labels/
-            ├── train/
-            │   ├── img1.txt
-            │   └── ...
-            ├── valid/
-            │   ├── img2.txt
-            │   └── ...
-            └── test/
-                ├── img3.txt
-                └── ...
+    └── datasets/
+        └── yolo_isaac_dataset/
+            ├── images/
+            │   ├── train/
+            │   │   ├── img1.jpg
+            │   │   └── ...
+            │   ├── val/
+            │   │   ├── img2.jpg
+            │   │   └── ...
+            │   └── test/
+            │       ├── img3.jpg
+            │       └── ..
+            └── labels/
+                ├── train/
+                │   ├── img1.txt
+                │   └── ...
+                ├── val/
+                │   ├── img2.txt
+                │   └── ...
+                └── test/
+                    ├── img3.txt
+                    └── ...
     Args:
         root_dir (str): The root of the YOLO dataset (ex. "yolo_isaac_dataset")
     """
+    root_dir = os.path.join(OVERALL_DATASET_ROOT, root_dir)
     logger.info("create_dataset_directories: Creating all directories for YOLO dataset.")
     for subdir in [YOLO_DATASET_IMAGE_DIR, YOLO_DATASET_LABEL_DIR]:
         full_subdir_path = os.path.join(root_dir, subdir)
@@ -189,7 +193,7 @@ def copy_files_to_yolo_dataset(pairs: list[ImageLabelPair], split_name: str, roo
     Args:
         pairs (list[ImageLabelPair]): The list of image/label pairs to copy.
         split_name (str): The name of the dataset split ('train', 'valid', or 'test').
-        root_dir (str): The root directory of the YOLO dataset, ex: "yolo_isaac_dataset"
+        root_dir (str): The root directory of the YOLO dataset, ex: "datasets/yolo_isaac_dataset"
     """
     full_image_dir = os.path.join(root_dir, YOLO_DATASET_IMAGE_DIR, split_name)
     full_label_dir = os.path.join(root_dir, YOLO_DATASET_LABEL_DIR, split_name)
@@ -235,10 +239,19 @@ def delete_overlays_dir(overlays_dir: str) -> None:
     logger.info("delete_overlays_dir: Done! Deleted %s.", overlays_dir)
 
 
-def generate_yolo_yaml_config(root_dir: str, image_dir: str, train_dir: str, valid_dir: str, test_dir: str) -> None:
+def generate_yolo_yaml_config(
+    root_dir: str,
+    image_dir: str,
+    train_dir: str,
+    valid_dir: str,
+    test_dir: str,
+    yaml_filename: str = YOLO_DATASET_YAML_FILE,
+) -> None:
     """
     Generate a YOLO configuration file in YAML format.
-    The "data.yaml" file will be created in yolo_isaac_dataset/.
+    The "data.yaml" file will be created in the directory this script is executed.
+    Basically, be sure to run this script from realtime-binding-of-isaac-item-detector/
+    So that "data.yaml" ends up in the root of the project.
 
     See: https://docs.ultralytics.com/datasets/detect/#ultralytics-yolo-format
 
@@ -246,19 +259,20 @@ def generate_yolo_yaml_config(root_dir: str, image_dir: str, train_dir: str, val
         root_dir (str): The root directory of the YOLO dataset. Ex. "yolo_isaac_dataset"
         image_dir: (str): The name of the directory holding images in root_dir. Ex: "images"
         train_dir (str): The directory containing training images. Ex: "train"
-        valid_dir (str): The directory containing validation images. Ex: "valid"
+        valid_dir (str): The directory containing validation images. Ex: "val"
         test_dir (str): The directory containing test images. Ex: "test"
+        yaml_filename (str): Name of the generated yaml file. Ex: "data.yaml"
     """
     name_id_map = get_id_name_mapping()
     config = {
         "path": root_dir,
-        "train": os.path.join(root_dir, image_dir, train_dir),
-        "val": os.path.join(root_dir, image_dir, valid_dir),
-        "test": os.path.join(root_dir, image_dir, test_dir),
+        "train": os.path.join(image_dir, train_dir),
+        "val": os.path.join(image_dir, valid_dir),
+        "test": os.path.join(image_dir, test_dir),
         "names": name_id_map,
     }
 
-    with open(os.path.join(root_dir, "dataset.yaml"), "w", encoding="utf-8") as f:
+    with open(yaml_filename, "w", encoding="utf-8") as f:
         yaml.dump(config, f, sort_keys=False)
 
     logger.info("generate_yolo_yaml_config: Generated YOLO config file at %s", os.path.join(root_dir, "dataset.yaml"))
@@ -275,9 +289,10 @@ def main() -> None:  # pylint: disable=missing-function-docstring
     )
 
     # move files to their new respective directories
-    copy_files_to_yolo_dataset(train_pairs, YOLO_DATASET_TRAIN_DIR, YOLO_DATASET_ROOT)
-    copy_files_to_yolo_dataset(valid_pairs, YOLO_DATASET_VALID_DIR, YOLO_DATASET_ROOT)
-    copy_files_to_yolo_dataset(test_pairs, YOLO_DATASET_TEST_DIR, YOLO_DATASET_ROOT)
+    dir_to_copy_to = os.path.join(OVERALL_DATASET_ROOT, YOLO_DATASET_ROOT)
+    copy_files_to_yolo_dataset(train_pairs, YOLO_DATASET_TRAIN_DIR, dir_to_copy_to)
+    copy_files_to_yolo_dataset(valid_pairs, YOLO_DATASET_VALID_DIR, dir_to_copy_to)
+    copy_files_to_yolo_dataset(test_pairs, YOLO_DATASET_TEST_DIR, dir_to_copy_to)
 
     # optional, to save space we can delete the original dataset
     delete_overlays_dir(os.path.join(DATA_DIR, OVERLAY_DIR))

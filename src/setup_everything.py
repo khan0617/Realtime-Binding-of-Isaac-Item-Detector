@@ -18,6 +18,7 @@ from constants import (
     DATA_DIR,
     ITEM_DIR,
     NUM_IMAGES_TO_USE_DURING_OVERLAY,
+    OVERALL_DATASET_ROOT,
     OVERLAY_DIR,
     OVERLAYABLE_AREA,
     SEED,
@@ -66,9 +67,11 @@ def main() -> None:
     train_pairs, valid_pairs, test_pairs = isaac_yolo_dataset_generator.split_dataset(
         pairs=pairs, train_ratio=TRAIN_RATIO, valid_ratio=VALID_RATIO, test_ratio=TEST_RATIO
     )
-    isaac_yolo_dataset_generator.copy_files_to_yolo_dataset(train_pairs, YOLO_DATASET_TRAIN_DIR, YOLO_DATASET_ROOT)
-    isaac_yolo_dataset_generator.copy_files_to_yolo_dataset(valid_pairs, YOLO_DATASET_VALID_DIR, YOLO_DATASET_ROOT)
-    isaac_yolo_dataset_generator.copy_files_to_yolo_dataset(test_pairs, YOLO_DATASET_TEST_DIR, YOLO_DATASET_ROOT)
+
+    dir_to_copy_to = os.path.join(OVERALL_DATASET_ROOT, YOLO_DATASET_ROOT)
+    isaac_yolo_dataset_generator.copy_files_to_yolo_dataset(train_pairs, YOLO_DATASET_TRAIN_DIR, dir_to_copy_to)
+    isaac_yolo_dataset_generator.copy_files_to_yolo_dataset(valid_pairs, YOLO_DATASET_VALID_DIR, dir_to_copy_to)
+    isaac_yolo_dataset_generator.copy_files_to_yolo_dataset(test_pairs, YOLO_DATASET_TEST_DIR, dir_to_copy_to)
     isaac_yolo_dataset_generator.delete_overlays_dir(os.path.join(DATA_DIR, OVERLAY_DIR))
     isaac_yolo_dataset_generator.generate_yolo_yaml_config(
         root_dir=YOLO_DATASET_ROOT,

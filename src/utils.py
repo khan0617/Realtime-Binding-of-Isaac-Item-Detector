@@ -58,6 +58,27 @@ def read_yolo_label_file(filepath: str) -> tuple[int, YoloBbox]:
 
 
 @lru_cache(maxsize=None)
+def get_yolo_class_id_from_item_id_tail(item_id_tail: str) -> str:
+    """Convert the IsaacItem id tail to its yolo class id.
+
+    Example: Sad Onion is item "1", but its yolo_class_id is "419".
+    So get_yolo_class_id_from_isaac_id_tail("1") returns "419".
+
+    Args:
+        item_id_tail (str): The end of an IsaacItem item_id. Ex. If item_id is "5.100.105", tail is "105".
+
+    Returns:
+        The yolo_class_id which represents this IsaacItem.
+        Raise ValueError on failure.
+    """
+    json_data = _load_json_data()
+    for tail, item_data in json_data.items():
+        if item_id_tail == tail:
+            return item_data["yolo_class_id"]
+    raise ValueError(f"get_yolo_class_id_from_isaac_id_tail: No yolo_class_id exists for {item_id_tail = }.")
+
+
+@lru_cache(maxsize=None)
 def get_id_name_mapping() -> dict[int, str]:
     """Return the YOLO class_id: class_name mapping required for the YAML config.
     If this function is called multiple times, the map will only be
@@ -69,6 +90,15 @@ def get_id_name_mapping() -> dict[int, str]:
     """
     json_data = _load_json_data()
     id_name_map = {}
-    for item_id_tail, item_data in json_data.items():
-        id_name_map[int(item_id_tail)] = item_data["name"]
+    for _, item_data in json_data.items():
+        id_name_map[int(item_data["yolo_class_id"])] = item_data["name"]
     return id_name_map
+
+
+def main():
+    sad_onion_id_tail = "1"
+    assert get_yolo_class_id_from_item_id_tail(sad_onion_id_tail) == "419"
+
+
+if __name__ == "__main__":
+    main()
