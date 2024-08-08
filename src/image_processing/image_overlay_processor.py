@@ -9,7 +9,16 @@ import matplotlib.pyplot as plt
 from PIL import Image, ImageFile, ImageOps
 from tqdm import tqdm
 
-from constants import BACKGROUND_DIR, DATA_DIR, ISAAC_ITEM_SCALE_FACTOR, ITEM_DIR, OVERLAY_DIR, OVERLAYABLE_AREA, SEED
+from constants import (
+    BACKGROUND_DIR,
+    DATA_DIR,
+    ISAAC_ITEM_SCALE_FACTOR,
+    ITEM_DIR,
+    NUM_IMAGES_TO_USE_DURING_OVERLAY,
+    OVERLAY_DIR,
+    OVERLAYABLE_AREA,
+    SEED,
+)
 from image_processing.bbox import CocoBbox, YoloBbox
 from logging_config import configure_logging
 from utils import read_yolo_label_file
@@ -240,7 +249,7 @@ class ImageOverlayProcessor:
         """
         image: ImageFile.ImageFile
         if isinstance(background, str):
-            image = Image.open(os.path.join(self._full_background_dir, background))
+            image = Image.open(os.path.join(self._full_background_dir, background))  # type: ignore
         else:
             image = background
         _, ax = plt.subplots(1)
@@ -345,7 +354,7 @@ class ImageOverlayProcessor:
             _, yolo_bbox = read_yolo_label_file(yolo_label_file_path)
             image = Image.open(image_path)
             bbox = yolo_bbox.to_coco_bbox(image.width, image.height)
-            self.visualize_bbox_area(image, bbox)
+            self.visualize_bbox_area(image, bbox)  # type: ignore
 
 
 def main():
@@ -358,7 +367,9 @@ def main():
     # processor.resize_all_backgrounds(target_size=TARGET_BACKGROUND_SIZE)
 
     # generate the overlay/ dataset. Note: this call will take like 6gb up on your drive and will hog cpu for a min or two.
-    processor.overlay_items_on_backgrounds(overlay_area=OVERLAYABLE_AREA, num_images_to_use=4, seed=SEED)
+    processor.overlay_items_on_backgrounds(
+        overlay_area=OVERLAYABLE_AREA, num_images_to_use=NUM_IMAGES_TO_USE_DURING_OVERLAY, seed=SEED
+    )
 
     # let's make sure it worked by plotting some images and their bbox
     processor.plot_random_overlays_with_bboxes(num_images=3)

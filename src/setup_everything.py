@@ -11,13 +11,12 @@ setup_everything.py does the following:
 
 import logging
 import os
-import subprocess
+import sys
 
 from constants import (
     BACKGROUND_DIR,
     DATA_DIR,
     ITEM_DIR,
-    JSON_DUMP_FILE,
     NUM_IMAGES_TO_USE_DURING_OVERLAY,
     OVERLAY_DIR,
     OVERLAYABLE_AREA,
@@ -25,17 +24,16 @@ from constants import (
     TEST_RATIO,
     TRAIN_RATIO,
     VALID_RATIO,
-    WIKI_ITEMS_HOMEPAGE,
     YOLO_DATASET_IMAGE_DIR,
     YOLO_DATASET_ROOT,
     YOLO_DATASET_TEST_DIR,
     YOLO_DATASET_TRAIN_DIR,
     YOLO_DATASET_VALID_DIR,
 )
+from generate_augmented_items import main as generate_augmented_items_main
 from image_processing.image_overlay_processor import ImageOverlayProcessor
 from isaac_yolo import isaac_yolo_dataset_generator
 from logging_config import configure_logging
-from scraping.scraper import Scraper
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -43,16 +41,15 @@ logger = logging.getLogger(__name__)
 
 def main() -> None:
     # see each respective module's main() for much more information on what the functions do and how to use them.
-    logger.info("main: Step 1: Download and parse HTML from Isaac Wiki, then dump metadata to json")
-    html = Scraper.fetch_page(WIKI_ITEMS_HOMEPAGE)
-    isaac_items = Scraper.parse_isaac_items_from_html(html)
-    Scraper.dump_item_data_to_json(isaac_items, JSON_DUMP_FILE)
-    Scraper.download_item_images(isaac_items, DATA_DIR, ITEM_DIR)
+    logger.info("main: Step 1: Clean data/items")
+    original_argv = sys.argv
+    sys.argv = ["generated_augmented_items.py", "--clean"]
+    generate_augmented_items_main()
 
-    logger.info("main: Step 2: Augment images")
-    script_path = os.path.join(".", "src", "generate_augmented_items.py")
-    subprocess.run(["python", script_path, "--clean"], check=True)
-    subprocess.run(["python", script_path, "--no-confirm"], check=True)
+    logger.info("main: Step 2: Download Isaac images from wiki (if needed) then augment images")
+    sys.argv = ["generated_augmented_items.py", "--no-confirm"]
+    generate_augmented_items_main()
+    sys.argv = original_argv
 
     logger.info("main: Step 3: Overlay the images onto backgrounds")
     processor = ImageOverlayProcessor(

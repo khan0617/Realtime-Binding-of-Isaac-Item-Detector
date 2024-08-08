@@ -238,7 +238,7 @@ def delete_overlays_dir(overlays_dir: str) -> None:
 def generate_yolo_yaml_config(root_dir: str, image_dir: str, train_dir: str, valid_dir: str, test_dir: str) -> None:
     """
     Generate a YOLO configuration file in YAML format.
-    The "data.yaml" file will be created in root_dir/.
+    The "data.yaml" file will be created in yolo_isaac_dataset/.
 
     See: https://docs.ultralytics.com/datasets/detect/#ultralytics-yolo-format
 

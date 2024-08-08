@@ -11,11 +11,11 @@ from constants import DATA_DIR as _DATA_DIR  # I redefine a DEFAULT_DATA_DIR her
 from constants import ITEM_DIR, JSON_DUMP_FILE
 from constants import SEED as _SEED
 from constants import UNMODIFIED_FILE_NAME, WIKI_ITEMS_HOMEPAGE
+from image_processing import data_augmentor
 from image_processing.augmentation import Augmentation
-from image_processing.data_augmentor import DataAugmentor
 from logging_config import configure_logging
+from scraping import scraper
 from scraping.isaac_item import IsaacItem
-from scraping.scraper import Scraper
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -94,7 +94,7 @@ def _augment_item_image(
         logger.warning("Image not found for item: %s, expected at: %s", item.name, image_path)
         return
 
-    DataAugmentor.augment_image(
+    data_augmentor.augment_image(
         image_path=image_path,
         output_dir=output_dir,
         augmentations=aug_subsets,
@@ -215,10 +215,10 @@ def main() -> None:
             return
 
     # get the isaac items from the html response, then dump to json.
-    html = Scraper.fetch_page(WIKI_ITEMS_HOMEPAGE)
-    isaac_items = Scraper.parse_isaac_items_from_html(html)
-    Scraper.download_item_images(isaac_items, args.data_dir, args.item_dir)
-    Scraper.dump_item_data_to_json(isaac_items, JSON_DUMP_FILE)
+    html = scraper.fetch_page(WIKI_ITEMS_HOMEPAGE)
+    isaac_items = scraper.parse_isaac_items_from_html(html)
+    scraper.download_item_images(isaac_items, args.data_dir, args.item_dir)
+    scraper.dump_item_data_to_json(isaac_items, JSON_DUMP_FILE)
 
     # note: if len(AUGMENTATIONS_TO_APPLY) == 10, we get 55 subsets when max_subset_size == 2.
     aug_subsets: list[tuple[Augmentation]] = list(_get_non_empty_subsets(AUGMENTATIONS_TO_APPLY, args.max_subset_size))
