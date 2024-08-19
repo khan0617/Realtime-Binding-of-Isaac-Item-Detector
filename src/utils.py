@@ -21,19 +21,6 @@ def _load_json_data() -> dict[str, dict[str, str]]:
         return data
 
 
-def convert_item_name_to_id(item_name: str) -> int:
-    """Convert this item name (url-encoded) to its int ID.
-
-    Relies on the JSON dumpfile from scraper.py existing.
-    For example, item_name == "%3F%3F%3F%27s_Only_Friend" has an associated "item_id": "5.100.320"
-    in the json. We'll return 320 as an int.
-    """
-    assert os.path.exists(JSON_DUMP_FILE), f"{JSON_DUMP_FILE} must exist to convert name to ID."
-    json_data = _load_json_data()
-    item_id: str = json_data[item_name]["item_id"]  # like "5.100.320"
-    return int(item_id.split(".")[-1])
-
-
 def read_yolo_label_file(filepath: str) -> tuple[int, YoloBbox]:
     """Read the specified YOLO label file and return the class ID and bounding box.
 
@@ -81,7 +68,6 @@ def get_yolo_class_id_from_item_id_tail(item_id_tail: str) -> str:
 @lru_cache(maxsize=None)
 def get_id_name_mapping() -> dict[int, str]:
     """Return the YOLO class_id: class_name mapping required for the YAML config.
-    If this function is called multiple times, the map will only be
     Ex. {0: 'person', 1: 'car'} could correspond to this in yaml:
 
     names:

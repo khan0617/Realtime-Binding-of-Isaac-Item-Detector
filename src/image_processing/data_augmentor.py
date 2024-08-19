@@ -1,5 +1,7 @@
-"""data_augmentor.py provides utilities to generate augmentations 
-on the Isaac Item Images to increase our dataset size."""
+"""
+data_augmentor.py provides utilities to generate augmentations 
+on the Isaac Item Images to increase our dataset size.
+"""
 
 import logging
 import os

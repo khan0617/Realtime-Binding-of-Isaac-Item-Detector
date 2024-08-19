@@ -24,7 +24,7 @@ class CocoBbox:
             img_height (int): Height of the image.
 
         Returns:
-            CocoBbox: Bounding box in COCO format.
+            YoloBbox: Bounding box in YOLO format.
         """
         x_center = (self.x + self.w / 2) / img_width
         y_center = (self.y + self.h / 2) / img_height
