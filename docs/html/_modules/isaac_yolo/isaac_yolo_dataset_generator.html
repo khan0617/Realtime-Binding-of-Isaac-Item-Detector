@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>isaac_yolo.isaac_yolo_dataset_generator &mdash; Realtime-Binding-Of-Isaac-Item-Detector 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=8d563738"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Realtime-Binding-Of-Isaac-Item-Detector
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../constants.html">constants module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generate_augmented_items.html">generate_augmented_items module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../image_processing.html">image_processing package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../isaac_web_app.html">isaac_web_app package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../isaac_yolo.html">isaac_yolo package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../logging_config.html">logging_config module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scraping.html">scraping package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../setup_everything.html">setup_everything module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../utils.html">utils module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Realtime-Binding-Of-Isaac-Item-Detector</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">isaac_yolo.isaac_yolo_dataset_generator</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for isaac_yolo.isaac_yolo_dataset_generator</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Takes data/overlay/ and creates a dataset usable by YOLO, including train/test/valid directories.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span> <span class="nn">constants</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DATA_DIR</span><span class="p">,</span>
+    <span class="n">OVERALL_DATASET_ROOT</span><span class="p">,</span>
+    <span class="n">OVERLAY_DIR</span><span class="p">,</span>
+    <span class="n">TEST_RATIO</span><span class="p">,</span>
+    <span class="n">TRAIN_RATIO</span><span class="p">,</span>
+    <span class="n">VALID_RATIO</span><span class="p">,</span>
+    <span class="n">YOLO_DATASET_IMAGE_DIR</span><span class="p">,</span>
+    <span class="n">YOLO_DATASET_LABEL_DIR</span><span class="p">,</span>
+    <span class="n">YOLO_DATASET_ROOT</span><span class="p">,</span>
+    <span class="n">YOLO_DATASET_TEST_DIR</span><span class="p">,</span>
+    <span class="n">YOLO_DATASET_TRAIN_DIR</span><span class="p">,</span>
+    <span class="n">YOLO_DATASET_VALID_DIR</span><span class="p">,</span>
+    <span class="n">YOLO_DATASET_YAML_FILE</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">logging_config</span> <span class="kn">import</span> <span class="n">configure_logging</span>
+<span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="n">get_id_name_mapping</span>
+
+<span class="n">configure_logging</span><span class="p">()</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ImageLabelPair">
+<a class="viewcode-back" href="../../isaac_yolo.html#isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">ImageLabelPair</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents an image and its associated YOLO label file.</span>
+
+<span class="sd">    They will be the same except for the extension.</span>
+<span class="sd">    Ex: image_path=&quot;.../100_rotate_1234.jpg&quot;, label_path=&quot;.../100_rotate_1234.txt&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">image_path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">label_path</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="create_dataset_directories">
+<a class="viewcode-back" href="../../isaac_yolo.html#isaac_yolo.isaac_yolo_dataset_generator.create_dataset_directories">[docs]</a>
+<span class="k">def</span> <span class="nf">create_dataset_directories</span><span class="p">(</span><span class="n">root_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create the directory structure for the YOLO dataset.</span>
+
+<span class="sd">    If root_dir == &quot;yolo_isaac_dataset&quot; then the final directory created will be like:</span>
+<span class="sd">    .</span>
+<span class="sd">    └── datasets/</span>
+<span class="sd">        └── yolo_isaac_dataset/</span>
+<span class="sd">            ├── images/</span>
+<span class="sd">            │   ├── train/</span>
+<span class="sd">            │   │   ├── img1.jpg</span>
+<span class="sd">            │   │   └── ...</span>
+<span class="sd">            │   ├── val/</span>
+<span class="sd">            │   │   ├── img2.jpg</span>
+<span class="sd">            │   │   └── ...</span>
+<span class="sd">            │   └── test/</span>
+<span class="sd">            │       ├── img3.jpg</span>
+<span class="sd">            │       └── ..</span>
+<span class="sd">            └── labels/</span>
+<span class="sd">                ├── train/</span>
+<span class="sd">                │   ├── img1.txt</span>
+<span class="sd">                │   └── ...</span>
+<span class="sd">                ├── val/</span>
+<span class="sd">                │   ├── img2.txt</span>
+<span class="sd">                │   └── ...</span>
+<span class="sd">                └── test/</span>
+<span class="sd">                    ├── img3.txt</span>
+<span class="sd">                    └── ...</span>
+<span class="sd">    Args:</span>
+<span class="sd">        root_dir (str): The root of the YOLO dataset (ex. &quot;yolo_isaac_dataset&quot;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">root_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">OVERALL_DATASET_ROOT</span><span class="p">,</span> <span class="n">root_dir</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;create_dataset_directories: Creating all directories for YOLO dataset.&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">subdir</span> <span class="ow">in</span> <span class="p">[</span><span class="n">YOLO_DATASET_IMAGE_DIR</span><span class="p">,</span> <span class="n">YOLO_DATASET_LABEL_DIR</span><span class="p">]:</span>
+        <span class="n">full_subdir_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_dir</span><span class="p">,</span> <span class="n">subdir</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">full_subdir_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="p">[</span><span class="n">YOLO_DATASET_TRAIN_DIR</span><span class="p">,</span> <span class="n">YOLO_DATASET_VALID_DIR</span><span class="p">,</span> <span class="n">YOLO_DATASET_TEST_DIR</span><span class="p">]:</span>
+            <span class="n">full_split_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">full_subdir_path</span><span class="p">,</span> <span class="n">split</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">full_split_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;create_dataset_directories: Done! Created all necessary directories.&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_image_label_file_pairs">
+<a class="viewcode-back" href="../../isaac_yolo.html#isaac_yolo.isaac_yolo_dataset_generator.get_image_label_file_pairs">[docs]</a>
+<span class="k">def</span> <span class="nf">get_image_label_file_pairs</span><span class="p">(</span><span class="n">overlays_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ImageLabelPair</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the list of all pairs of (image.jpg, image_.txt) within overlays_dir,</span>
+<span class="sd">    where image.txt represents the YOLO bbox file.</span>
+
+<span class="sd">    overlays_dir should be formatted like:</span>
+<span class="sd">    .</span>
+<span class="sd">    └── overlays</span>
+<span class="sd">        ├── background_1</span>
+<span class="sd">        │   ├── image1.jpg</span>
+<span class="sd">        │   ├── image1.txt</span>
+<span class="sd">        │   └── ...</span>
+<span class="sd">        ├── background_2</span>
+<span class="sd">        │   ├── image2.jpg</span>
+<span class="sd">        │   ├── image2.txt</span>
+<span class="sd">        │   └── ...</span>
+<span class="sd">        └── ...</span>
+<span class="sd">    This function assumes that every &quot;image.jpg&quot; has an associated &quot;image.txt&quot;.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        overlays_dir (str): The root directory of all images to find image/label pairs.</span>
+<span class="sd">            Ex: data/overlays</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list[ImageLabelPair]: The list of all (image_path, label_path) filename tuples.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;get_image_label_file_pairs: Generating pairs from </span><span class="si">%s</span><span class="s2">...&quot;</span><span class="p">,</span> <span class="n">overlays_dir</span><span class="p">)</span>
+    <span class="n">image_label_pairs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ImageLabelPair</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">overlays_dir</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s2">&quot;.jpg&quot;</span><span class="p">,</span> <span class="s2">&quot;.jpeg&quot;</span><span class="p">)):</span>
+                <span class="n">image_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">file</span><span class="p">)</span>
+                <span class="n">label_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">image_path</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">.txt&quot;</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">label_path</span><span class="p">):</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;image path </span><span class="si">{</span><span class="n">image_path</span><span class="si">}</span><span class="s2"> exists but label path </span><span class="si">{</span><span class="n">label_path</span><span class="si">}</span><span class="s2"> does not.&quot;</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+                <span class="n">image_label_pairs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ImageLabelPair</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="n">label_path</span><span class="p">))</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;get_image_label_file_pairs: Done! Generated </span><span class="si">%d</span><span class="s2"> pairs&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">image_label_pairs</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">image_label_pairs</span></div>
+
+
+
+<div class="viewcode-block" id="split_dataset">
+<a class="viewcode-back" href="../../isaac_yolo.html#isaac_yolo.isaac_yolo_dataset_generator.split_dataset">[docs]</a>
+<span class="k">def</span> <span class="nf">split_dataset</span><span class="p">(</span>
+    <span class="n">pairs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ImageLabelPair</span><span class="p">],</span> <span class="n">train_ratio</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">valid_ratio</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">test_ratio</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ImageLabelPair</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">ImageLabelPair</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">ImageLabelPair</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Split the dataset into training, validation, and test sets.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        pairs (List[ImageLabelPair]): The list of all image/label filename pairs.</span>
+<span class="sd">        train_ratio (float): The ratio of the training set.</span>
+<span class="sd">        valid_ratio (float): The ratio of the validation set.</span>
+<span class="sd">        test_ratio (float): The ratio of the test set.</span>
+<span class="sd">        seed (int, optional): Seed for random shuffling of the pairs.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: Three lists containing the training, validation, and test pairs respectively.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;split_dataset: Splitting dataset into train/valid/test...&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">train_ratio</span> <span class="o">+</span> <span class="n">valid_ratio</span> <span class="o">+</span> <span class="n">test_ratio</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;train, valid, and test ratios must sum to 1&quot;</span>
+    <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">pairs</span><span class="p">)</span>
+    <span class="n">num_total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pairs</span><span class="p">)</span>
+    <span class="n">num_train</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_total</span> <span class="o">*</span> <span class="n">train_ratio</span><span class="p">)</span>
+    <span class="n">num_valid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_total</span> <span class="o">*</span> <span class="n">valid_ratio</span><span class="p">)</span>
+    <span class="n">num_test</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">num_total</span> <span class="o">*</span> <span class="n">test_ratio</span><span class="p">),</span> <span class="n">num_total</span> <span class="o">-</span> <span class="n">num_train</span> <span class="o">-</span> <span class="n">num_valid</span><span class="p">)</span>  <span class="c1"># don&#39;t miss any due to rounding</span>
+    <span class="k">assert</span> <span class="n">num_train</span> <span class="o">+</span> <span class="n">num_valid</span> <span class="o">+</span> <span class="n">num_test</span> <span class="o">==</span> <span class="n">num_total</span><span class="p">,</span> <span class="s2">&quot;num_train + num_valid + num_test must equal num_total&quot;</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;split_dataset: train/valid/test have respective sizes: </span><span class="si">%d</span><span class="s2">, </span><span class="si">%d</span><span class="s2">, </span><span class="si">%d</span><span class="s2">, total: </span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">num_train</span><span class="p">,</span>
+        <span class="n">num_valid</span><span class="p">,</span>
+        <span class="n">num_test</span><span class="p">,</span>
+        <span class="n">num_total</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">train_pairs</span> <span class="o">=</span> <span class="n">pairs</span><span class="p">[:</span><span class="n">num_train</span><span class="p">]</span>
+    <span class="n">valid_pairs</span> <span class="o">=</span> <span class="n">pairs</span><span class="p">[</span><span class="n">num_train</span> <span class="p">:</span> <span class="n">num_train</span> <span class="o">+</span> <span class="n">num_valid</span><span class="p">]</span>
+    <span class="n">test_pairs</span> <span class="o">=</span> <span class="n">pairs</span><span class="p">[</span><span class="n">num_train</span> <span class="o">+</span> <span class="n">num_valid</span> <span class="p">:</span> <span class="n">num_train</span> <span class="o">+</span> <span class="n">num_valid</span> <span class="o">+</span> <span class="n">num_test</span><span class="p">]</span>
+
+    <span class="c1"># fmt: off</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_pairs</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid_pairs</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">test_pairs</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">pairs</span><span class="p">),</span>\
+        <span class="s2">&quot;lengths of train, valid, and test pairs must sum to len(pairs).&quot;</span>
+    <span class="c1"># fmt: on</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;split_dataset: Done! Training set: </span><span class="si">%d</span><span class="s2">, Validation set: </span><span class="si">%d</span><span class="s2">, Test set: </span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">train_pairs</span><span class="p">),</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">valid_pairs</span><span class="p">),</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">test_pairs</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">train_pairs</span><span class="p">,</span> <span class="n">valid_pairs</span><span class="p">,</span> <span class="n">test_pairs</span></div>
+
+
+
+<div class="viewcode-block" id="copy_files_to_yolo_dataset">
+<a class="viewcode-back" href="../../isaac_yolo.html#isaac_yolo.isaac_yolo_dataset_generator.copy_files_to_yolo_dataset">[docs]</a>
+<span class="k">def</span> <span class="nf">copy_files_to_yolo_dataset</span><span class="p">(</span><span class="n">pairs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ImageLabelPair</span><span class="p">],</span> <span class="n">split_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">root_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Copy image and label files to their respective directories in the YOLO dataset.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        pairs (list[ImageLabelPair]): The list of image/label pairs to copy.</span>
+<span class="sd">        split_name (str): The name of the dataset split (&#39;train&#39;, &#39;valid&#39;, or &#39;test&#39;).</span>
+<span class="sd">        root_dir (str): The root directory of the YOLO dataset, ex: &quot;datasets/yolo_isaac_dataset&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">full_image_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_dir</span><span class="p">,</span> <span class="n">YOLO_DATASET_IMAGE_DIR</span><span class="p">,</span> <span class="n">split_name</span><span class="p">)</span>
+    <span class="n">full_label_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_dir</span><span class="p">,</span> <span class="n">YOLO_DATASET_LABEL_DIR</span><span class="p">,</span> <span class="n">split_name</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;copy_files_to_yolo_dataset: Copying files to </span><span class="si">%s</span><span class="s2">...&quot;</span><span class="p">,</span> <span class="n">split_name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">copy_helper</span><span class="p">(</span><span class="n">pair</span><span class="p">:</span> <span class="n">ImageLabelPair</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">pair</span><span class="o">.</span><span class="n">image_path</span><span class="p">,</span> <span class="n">full_image_dir</span><span class="p">)</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">pair</span><span class="o">.</span><span class="n">label_path</span><span class="p">,</span> <span class="n">full_label_dir</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pylint: disable=broad-exception-caught</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="s2">&quot;Failed to copy either </span><span class="si">%s</span><span class="s2"> or </span><span class="si">%s</span><span class="s2"> to </span><span class="si">%s</span><span class="s2"> or </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">!&quot;</span><span class="p">,</span>
+                <span class="n">pair</span><span class="o">.</span><span class="n">image_path</span><span class="p">,</span>
+                <span class="n">pair</span><span class="o">.</span><span class="n">label_path</span><span class="p">,</span>
+                <span class="n">full_image_dir</span><span class="p">,</span>
+                <span class="n">full_label_dir</span><span class="p">,</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">()</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+        <span class="nb">list</span><span class="p">(</span><span class="n">tqdm</span><span class="p">(</span><span class="n">executor</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">copy_helper</span><span class="p">,</span> <span class="n">pairs</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Copying images/labels (multi-threaded)&quot;</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">pairs</span><span class="p">)))</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;copy_files_to_yolo_dataset: Done! Copied </span><span class="si">%d</span><span class="s2"> pairs to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pairs</span><span class="p">),</span> <span class="n">split_name</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="delete_overlays_dir">
+<a class="viewcode-back" href="../../isaac_yolo.html#isaac_yolo.isaac_yolo_dataset_generator.delete_overlays_dir">[docs]</a>
+<span class="k">def</span> <span class="nf">delete_overlays_dir</span><span class="p">(</span><span class="n">overlays_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Delete overlays_dir.</span>
+
+<span class="sd">    Irreversible, make sure you have called copy_files_to_yolo_dataset(...) beforehand!</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        overlays_dir (str): Full path to the overlays directory. Ex: data/overlays</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;delete_overlays_dir: Deleting </span><span class="si">%s</span><span class="s2">...&quot;</span><span class="p">,</span> <span class="n">overlays_dir</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">overlays_dir</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pylint: disable=broad-exception-caught</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="s2">&quot;delete_overlays_dir: Couldn&#39;t delete </span><span class="si">%s</span><span class="s2"> (maybe you already deleted it?): </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">overlays_dir</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;delete_overlays_dir: Done! Deleted </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span> <span class="n">overlays_dir</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="generate_yolo_yaml_config">
+<a class="viewcode-back" href="../../isaac_yolo.html#isaac_yolo.isaac_yolo_dataset_generator.generate_yolo_yaml_config">[docs]</a>
+<span class="k">def</span> <span class="nf">generate_yolo_yaml_config</span><span class="p">(</span>
+    <span class="n">root_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">image_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">train_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">valid_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">test_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">yaml_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">YOLO_DATASET_YAML_FILE</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate a YOLO configuration file in YAML format.</span>
+<span class="sd">    The &quot;data.yaml&quot; file will be created in the directory this script is executed.</span>
+<span class="sd">    Basically, be sure to run this script from realtime-binding-of-isaac-item-detector/</span>
+<span class="sd">    So that &quot;data.yaml&quot; ends up in the root of the project.</span>
+
+<span class="sd">    See: https://docs.ultralytics.com/datasets/detect/#ultralytics-yolo-format</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        root_dir (str): The root directory of the YOLO dataset. Ex. &quot;yolo_isaac_dataset&quot;</span>
+<span class="sd">        image_dir: (str): The name of the directory holding images in root_dir. Ex: &quot;images&quot;</span>
+<span class="sd">        train_dir (str): The directory containing training images. Ex: &quot;train&quot;</span>
+<span class="sd">        valid_dir (str): The directory containing validation images. Ex: &quot;val&quot;</span>
+<span class="sd">        test_dir (str): The directory containing test images. Ex: &quot;test&quot;</span>
+<span class="sd">        yaml_filename (str): Name of the generated yaml file. Ex: &quot;data.yaml&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">name_id_map</span> <span class="o">=</span> <span class="n">get_id_name_mapping</span><span class="p">()</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">root_dir</span><span class="p">,</span>
+        <span class="s2">&quot;train&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">image_dir</span><span class="p">,</span> <span class="n">train_dir</span><span class="p">),</span>
+        <span class="s2">&quot;val&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">image_dir</span><span class="p">,</span> <span class="n">valid_dir</span><span class="p">),</span>
+        <span class="s2">&quot;test&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">image_dir</span><span class="p">,</span> <span class="n">test_dir</span><span class="p">),</span>
+        <span class="s2">&quot;names&quot;</span><span class="p">:</span> <span class="n">name_id_map</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">yaml_filename</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;generate_yolo_yaml_config: Generated YOLO config file at </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_dir</span><span class="p">,</span> <span class="s2">&quot;dataset.yaml&quot;</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../isaac_yolo.html#isaac_yolo.isaac_yolo_dataset_generator.main">[docs]</a>
+<span class="k">def</span> <span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pylint: disable=missing-function-docstring</span>
+    <span class="c1"># example usage: 1st create the necessary directories</span>
+    <span class="n">create_dataset_directories</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="n">YOLO_DATASET_ROOT</span><span class="p">)</span>
+
+    <span class="c1"># collect all image/label pairs then split them into train/valid/test</span>
+    <span class="n">pairs</span> <span class="o">=</span> <span class="n">get_image_label_file_pairs</span><span class="p">(</span><span class="n">overlays_dir</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_DIR</span><span class="p">,</span> <span class="n">OVERLAY_DIR</span><span class="p">))</span>
+    <span class="n">train_pairs</span><span class="p">,</span> <span class="n">valid_pairs</span><span class="p">,</span> <span class="n">test_pairs</span> <span class="o">=</span> <span class="n">split_dataset</span><span class="p">(</span>
+        <span class="n">pairs</span><span class="o">=</span><span class="n">pairs</span><span class="p">,</span> <span class="n">train_ratio</span><span class="o">=</span><span class="n">TRAIN_RATIO</span><span class="p">,</span> <span class="n">valid_ratio</span><span class="o">=</span><span class="n">VALID_RATIO</span><span class="p">,</span> <span class="n">test_ratio</span><span class="o">=</span><span class="n">TEST_RATIO</span>
+    <span class="p">)</span>
+
+    <span class="c1"># move files to their new respective directories</span>
+    <span class="n">dir_to_copy_to</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">OVERALL_DATASET_ROOT</span><span class="p">,</span> <span class="n">YOLO_DATASET_ROOT</span><span class="p">)</span>
+    <span class="n">copy_files_to_yolo_dataset</span><span class="p">(</span><span class="n">train_pairs</span><span class="p">,</span> <span class="n">YOLO_DATASET_TRAIN_DIR</span><span class="p">,</span> <span class="n">dir_to_copy_to</span><span class="p">)</span>
+    <span class="n">copy_files_to_yolo_dataset</span><span class="p">(</span><span class="n">valid_pairs</span><span class="p">,</span> <span class="n">YOLO_DATASET_VALID_DIR</span><span class="p">,</span> <span class="n">dir_to_copy_to</span><span class="p">)</span>
+    <span class="n">copy_files_to_yolo_dataset</span><span class="p">(</span><span class="n">test_pairs</span><span class="p">,</span> <span class="n">YOLO_DATASET_TEST_DIR</span><span class="p">,</span> <span class="n">dir_to_copy_to</span><span class="p">)</span>
+
+    <span class="c1"># optional, to save space we can delete the original dataset</span>
+    <span class="n">delete_overlays_dir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_DIR</span><span class="p">,</span> <span class="n">OVERLAY_DIR</span><span class="p">))</span>
+
+    <span class="c1"># finally, generate the .yaml file which the yolo model needs</span>
+    <span class="n">generate_yolo_yaml_config</span><span class="p">(</span>
+        <span class="n">root_dir</span><span class="o">=</span><span class="n">YOLO_DATASET_ROOT</span><span class="p">,</span>
+        <span class="n">image_dir</span><span class="o">=</span><span class="n">YOLO_DATASET_IMAGE_DIR</span><span class="p">,</span>
+        <span class="n">train_dir</span><span class="o">=</span><span class="n">YOLO_DATASET_TRAIN_DIR</span><span class="p">,</span>
+        <span class="n">valid_dir</span><span class="o">=</span><span class="n">YOLO_DATASET_VALID_DIR</span><span class="p">,</span>
+        <span class="n">test_dir</span><span class="o">=</span><span class="n">YOLO_DATASET_TEST_DIR</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Hamza Khan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>image_processing.image_overlay_processor &mdash; Realtime-Binding-Of-Isaac-Item-Detector 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=8d563738"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Realtime-Binding-Of-Isaac-Item-Detector
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../constants.html">constants module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generate_augmented_items.html">generate_augmented_items module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../image_processing.html">image_processing package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../isaac_web_app.html">isaac_web_app package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../isaac_yolo.html">isaac_yolo package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../logging_config.html">logging_config module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scraping.html">scraping package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../setup_everything.html">setup_everything module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../utils.html">utils module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Realtime-Binding-Of-Isaac-Item-Detector</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">image_processing.image_overlay_processor</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for image_processing.image_overlay_processor</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="kn">import</span> <span class="n">ProcessPoolExecutor</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">repeat</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.patches</span> <span class="k">as</span> <span class="nn">patches</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageFile</span><span class="p">,</span> <span class="n">ImageOps</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span> <span class="nn">constants</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BACKGROUND_DIR</span><span class="p">,</span>
+    <span class="n">DATA_DIR</span><span class="p">,</span>
+    <span class="n">ISAAC_ITEM_SCALE_FACTOR</span><span class="p">,</span>
+    <span class="n">ITEM_DIR</span><span class="p">,</span>
+    <span class="n">NUM_IMAGES_TO_USE_DURING_OVERLAY</span><span class="p">,</span>
+    <span class="n">OVERLAY_DIR</span><span class="p">,</span>
+    <span class="n">OVERLAYABLE_AREA</span><span class="p">,</span>
+    <span class="n">SEED</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">image_processing.bbox</span> <span class="kn">import</span> <span class="n">CocoBbox</span><span class="p">,</span> <span class="n">YoloBbox</span>
+<span class="kn">from</span> <span class="nn">logging_config</span> <span class="kn">import</span> <span class="n">configure_logging</span>
+<span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="n">get_yolo_class_id_from_item_id_tail</span><span class="p">,</span> <span class="n">read_yolo_label_file</span>
+
+<span class="n">configure_logging</span><span class="p">()</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_save_overlay_metadata</span><span class="p">(</span><span class="n">output_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">class_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">bbox</span><span class="p">:</span> <span class="n">YoloBbox</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Save metadata for an item overlay as a .txt file in YOLO format.</span>
+
+<span class="sd">    Each .txt label file consists of lines like: `&lt;class_id&gt; &lt;x_center&gt; &lt;y_center&gt; &lt;width&gt; &lt;height&gt;`</span>
+<span class="sd">    If we had multiple items on screen we could supply multiple lines.</span>
+<span class="sd">    We will use the IsaacItem.yolo_class_id id as the yolo class ID.</span>
+
+<span class="sd">    Example: 0 0.48 0.63 0.69 0.71</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        output_path (str): The path to save the .txt file (must end in .txt).</span>
+<span class="sd">        class_id (str): The class_id we&#39;ll to represent this item to the YOLO model.</span>
+<span class="sd">        bbox (YoloBbox): The bounding box of the overlaid item.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">metadata</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">class_id</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">bbox</span><span class="o">.</span><span class="n">x_center</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">bbox</span><span class="o">.</span><span class="n">y_center</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">bbox</span><span class="o">.</span><span class="n">width</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">bbox</span><span class="o">.</span><span class="n">height</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;_save_overlay_metadata: Saved metadata at path </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">output_path</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_overlay_augmented_images_on_background</span><span class="p">(</span>
+    <span class="n">overlay_area</span><span class="p">:</span> <span class="n">CocoBbox</span><span class="p">,</span>
+    <span class="n">background</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span>
+    <span class="n">item_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">item_id_tail</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">background_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">full_output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Overlay each image in item_paths onto background with random positioning within overlay_area.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        overlay_area (CocoBbox): The bounding box area within which items can be overlaid.</span>
+<span class="sd">        background (PIL.Image.Image): The background image onto which items will be overlaid.</span>
+<span class="sd">        item_paths (List[str]): List of complete file paths to augmented item images.</span>
+<span class="sd">        item_id_tail (str): Tail of the item id, such as &quot;145&quot; for Guppy&#39;s Head (which is item 5.100.145).</span>
+<span class="sd">        background_name (str): The name of the background being used. (ex. &quot;Library_7&quot;)</span>
+<span class="sd">        full_output_dir (str): The output directory of these overlayed images (ex: &quot;data/overlays&quot;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">item_path</span> <span class="ow">in</span> <span class="n">item_paths</span><span class="p">:</span>
+        <span class="c1"># open the item image then resize it otherwise they&#39;re too small compared to in-game.</span>
+        <span class="n">item_image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">item_path</span><span class="p">)</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">&quot;RGBA&quot;</span><span class="p">)</span>
+        <span class="n">new_image_size</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="n">item_image</span><span class="o">.</span><span class="n">width</span> <span class="o">*</span> <span class="n">ISAAC_ITEM_SCALE_FACTOR</span><span class="p">),</span>
+            <span class="nb">int</span><span class="p">(</span><span class="n">item_image</span><span class="o">.</span><span class="n">height</span> <span class="o">*</span> <span class="n">ISAAC_ITEM_SCALE_FACTOR</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">item_image</span> <span class="o">=</span> <span class="n">item_image</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">new_image_size</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Resampling</span><span class="o">.</span><span class="n">LANCZOS</span><span class="p">)</span>
+
+        <span class="c1"># get random paste location on the image</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="n">overlay_area</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">overlay_area</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">overlay_area</span><span class="o">.</span><span class="n">w</span> <span class="o">-</span> <span class="n">item_image</span><span class="o">.</span><span class="n">width</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="n">overlay_area</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">overlay_area</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">overlay_area</span><span class="o">.</span><span class="n">h</span> <span class="o">-</span> <span class="n">item_image</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
+        <span class="n">item_bbox</span> <span class="o">=</span> <span class="n">CocoBbox</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">item_image</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">item_image</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
+
+        <span class="c1"># overlay the item onto the background</span>
+        <span class="n">background_copy</span> <span class="o">=</span> <span class="n">background</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">background_copy</span><span class="o">.</span><span class="n">paste</span><span class="p">(</span><span class="n">item_image</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">item_image</span><span class="p">)</span>  <span class="c1"># PIL uses the alpha of the item image as a mask</span>
+
+        <span class="c1"># generate the output filename</span>
+        <span class="n">output_filename</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">background_name</span><span class="si">}</span><span class="s2">_&quot;</span>  <span class="c1"># ex. &quot;Library_7_&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">item_id_tail</span><span class="si">}</span><span class="s2">_&quot;</span>  <span class="c1"># ex. &quot;145_&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">item_path</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">.jpg&quot;</span>  <span class="c1"># ex. &quot;rotate_flip_1234.jpg&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># these files will be saved into an output dir like &quot;data/overlays/Library_7/</span>
+        <span class="n">output_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">full_output_dir</span><span class="p">,</span> <span class="n">background_name</span><span class="p">)</span>
+        <span class="n">output_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">output_filename</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># save the image and metadata</span>
+        <span class="n">background_copy</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;_overlay_augmented_images_on_background: Saved overlayed image: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">output_path</span><span class="p">)</span>
+        <span class="n">_save_overlay_metadata</span><span class="p">(</span>
+            <span class="n">output_path</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">output_path</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">.txt&quot;</span><span class="p">,</span>  <span class="c1"># remove &quot;.jpg&quot; from the end and make it &quot;.txt&quot;</span>
+            <span class="n">class_id</span><span class="o">=</span><span class="n">get_yolo_class_id_from_item_id_tail</span><span class="p">(</span><span class="n">item_id_tail</span><span class="p">),</span>
+            <span class="n">bbox</span><span class="o">=</span><span class="n">item_bbox</span><span class="o">.</span><span class="n">to_yolo_bbox</span><span class="p">(</span><span class="n">background_copy</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">background_copy</span><span class="o">.</span><span class="n">height</span><span class="p">),</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_overlay_worker</span><span class="p">(</span>
+    <span class="n">background_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">overlay_area</span><span class="p">:</span> <span class="n">CocoBbox</span><span class="p">,</span>
+    <span class="n">num_images_to_use</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">full_item_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">full_background_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">full_output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Worker function to overlay augmented item images onto a single background image.</span>
+
+<span class="sd">    This function opens the background image, iterates over all item directories, selects a subset of augmented</span>
+<span class="sd">    item images, and overlays each of them onto the background image at random positions within the specified</span>
+<span class="sd">    overlay area. The resulting images and their metadata are saved to the output directory.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        background_file (str): The filename of the background image.</span>
+<span class="sd">        overlay_area (Bbox): The bounding box area within which items can be overlaid.</span>
+<span class="sd">        num_images_to_use (int): The number of images to use for each item per background (randomly selected).</span>
+<span class="sd">        full_item_dir (str): The directory containing augmented item images. (ex. data/items)</span>
+<span class="sd">        full_background_dir (str): The directory containing background images. (ex. data/isaac_backgrounds)</span>
+<span class="sd">        full_output_dir (str): The directory where processed images will be saved. (ex. data/overlays)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># full_background_path is like &quot;data/isaac_backgrounds/Library_7.jpg&quot;</span>
+    <span class="n">full_background_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">full_background_dir</span><span class="p">,</span> <span class="n">background_file</span><span class="p">)</span>
+    <span class="n">background_img</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">full_background_path</span><span class="p">)</span>
+
+    <span class="c1"># items are represented by the tail of their item id, these are just numbers like &quot;145&quot;.</span>
+    <span class="n">item_dirs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">full_item_dir</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">item_dir</span> <span class="ow">in</span> <span class="n">item_dirs</span><span class="p">:</span>
+        <span class="c1"># concatenated_item_dir is like &#39;data/items/145/&#39;</span>
+        <span class="n">concatenated_item_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">full_item_dir</span><span class="p">,</span> <span class="n">item_dir</span><span class="p">)</span>
+
+        <span class="c1"># fmt: off</span>
+        <span class="c1"># augmented_images is like [&quot;rotate_1234.png&quot;, &quot;flip_brightness_5678.png&quot;, ...]</span>
+        <span class="n">full_augmented_image_paths</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">concatenated_item_dir</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">concatenated_item_dir</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;png&quot;</span><span class="p">)</span>
+        <span class="p">]</span>  <span class="c1"># fmt: on</span>
+
+        <span class="c1"># if we generate combos of ALL augmented images and ALL backgrounds the dataset will be like 500gb LOL</span>
+        <span class="c1"># so let&#39;s take a subset. do a random shuffle then select only num_images_to_use of those.</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">full_augmented_image_paths</span><span class="p">)</span>
+        <span class="n">subset_of_image_paths</span> <span class="o">=</span> <span class="n">full_augmented_image_paths</span><span class="p">[:</span><span class="n">num_images_to_use</span><span class="p">]</span>
+
+        <span class="n">_overlay_augmented_images_on_background</span><span class="p">(</span>
+            <span class="n">overlay_area</span><span class="o">=</span><span class="n">overlay_area</span><span class="p">,</span>
+            <span class="n">background</span><span class="o">=</span><span class="n">background_img</span><span class="p">,</span>
+            <span class="n">item_paths</span><span class="o">=</span><span class="n">subset_of_image_paths</span><span class="p">,</span>
+            <span class="n">item_id_tail</span><span class="o">=</span><span class="n">item_dir</span><span class="p">,</span>
+            <span class="n">background_name</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">background_file</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">full_output_dir</span><span class="o">=</span><span class="n">full_output_dir</span><span class="p">,</span>
+        <span class="p">)</span>
+
+
+<div class="viewcode-block" id="ImageOverlayProcessor">
+<a class="viewcode-back" href="../../image_processing.html#image_processing.image_overlay_processor.ImageOverlayProcessor">[docs]</a>
+<span class="k">class</span> <span class="nc">ImageOverlayProcessor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Repsonsible for overlaying Isaac item images onto various backgrounds.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">background_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">item_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Attributes:</span>
+<span class="sd">            data_dir (str): The root directory for all data.</span>
+<span class="sd">            background_dir (str): The directory under data_dir containing background images.</span>
+<span class="sd">            item_dir (str): The directory under data_dir containing augmented item images.</span>
+<span class="sd">            output_dir (str): The directory under data_dir where processed images will be saved.</span>
+
+<span class="sd">        Example:\n`processor = ImageOverlayProcessor(</span>
+<span class="sd">                data_dir=&#39;data&#39;,</span>
+<span class="sd">                background_dir=&#39;backgrounds&#39;,</span>
+<span class="sd">                item_dir=&#39;items&#39;,</span>
+<span class="sd">                output_dir=&#39;overlays&#39;</span>
+<span class="sd">        )`</span>
+
+<span class="sd">        This constructor represents data/backgrounds/ (must exist), data/items/ (must exist),</span>
+<span class="sd">            and &#39;data/overlays/&#39; (will be created in this class)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span> <span class="o">=</span> <span class="n">data_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">background_dir</span> <span class="o">=</span> <span class="n">background_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">item_dir</span> <span class="o">=</span> <span class="n">item_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span> <span class="o">=</span> <span class="n">output_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_full_background_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">background_dir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_full_item_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">item_dir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_full_output_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_resize_and_pad_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span> <span class="n">target_size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resize and pad the image to fit the target size while maintaining aspect ratio.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            image (PIL.Image.Image): The image to resize and pad.</span>
+<span class="sd">            target_size (tuple[int, int]): The target size (width, height) for the output image.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            PIL.Image.Image: The resized and padded image.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># resize the image, preserving aspect ratio</span>
+        <span class="n">original_size</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">ratio</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">target_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">original_size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">target_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">original_size</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">new_size</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">original_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">ratio</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">original_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">ratio</span><span class="p">))</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">new_size</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Resampling</span><span class="o">.</span><span class="n">LANCZOS</span><span class="p">)</span>
+
+        <span class="c1"># pad the image to the target size</span>
+        <span class="n">delta_w</span> <span class="o">=</span> <span class="n">target_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">new_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">delta_h</span> <span class="o">=</span> <span class="n">target_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">new_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">padding</span> <span class="o">=</span> <span class="p">(</span><span class="n">delta_w</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">delta_h</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">delta_w</span> <span class="o">-</span> <span class="p">(</span><span class="n">delta_w</span> <span class="o">//</span> <span class="mi">2</span><span class="p">),</span> <span class="n">delta_h</span> <span class="o">-</span> <span class="p">(</span><span class="n">delta_h</span> <span class="o">//</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="n">new_image</span> <span class="o">=</span> <span class="n">ImageOps</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">padding</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">new_image</span>
+
+<div class="viewcode-block" id="ImageOverlayProcessor.resize_all_backgrounds">
+<a class="viewcode-back" href="../../image_processing.html#image_processing.image_overlay_processor.ImageOverlayProcessor.resize_all_backgrounds">[docs]</a>
+    <span class="k">def</span> <span class="nf">resize_all_backgrounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resize and pad all background images to the target size.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            target_size (tuple[int, int]): The target size (width, height) for the output images.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_background_dir</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">filename</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s2">&quot;png&quot;</span><span class="p">,</span> <span class="s2">&quot;jpg&quot;</span><span class="p">,</span> <span class="s2">&quot;jpeg&quot;</span><span class="p">)):</span>
+                <span class="n">image_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_background_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+                <span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
+                <span class="n">resized_image</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resize_and_pad_image</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">target_size</span><span class="p">)</span>
+                <span class="n">output_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_output_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+                <span class="n">resized_image</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Processed and saved: </span><span class="si">%s</span><span class="s2"> to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">output_path</span><span class="p">,</span> <span class="n">target_size</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ImageOverlayProcessor.visualize_bbox_area">
+<a class="viewcode-back" href="../../image_processing.html#image_processing.image_overlay_processor.ImageOverlayProcessor.visualize_bbox_area">[docs]</a>
+    <span class="k">def</span> <span class="nf">visualize_bbox_area</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">background</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">ImageFile</span><span class="o">.</span><span class="n">ImageFile</span><span class="p">,</span> <span class="n">bbox</span><span class="p">:</span> <span class="n">CocoBbox</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Displays an image with a bounding box overlay.</span>
+
+<span class="sd">        Used for debugging purposes. Isaac backgrounds include walls, and we don&#39;t</span>
+<span class="sd">        want to place items on the walls since they don&#39;t appear there in game.</span>
+<span class="sd">        This function helps visualize different bboxes over a background so we can iterate</span>
+<span class="sd">        and pick an &quot;overlayable&quot; area.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            background_name (Union[str, PIL.Image.Image]): The name (not path) of the background file or the image object itself.</span>
+<span class="sd">            bbox (CocoBbox): Bounding box to overlay on the image.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">image</span><span class="p">:</span> <span class="n">ImageFile</span><span class="o">.</span><span class="n">ImageFile</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">background</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_background_dir</span><span class="p">,</span> <span class="n">background</span><span class="p">))</span>  <span class="c1"># type: ignore</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">image</span> <span class="o">=</span> <span class="n">background</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+        <span class="n">rect</span> <span class="o">=</span> <span class="n">patches</span><span class="o">.</span><span class="n">Rectangle</span><span class="p">((</span><span class="n">bbox</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">bbox</span><span class="o">.</span><span class="n">y</span><span class="p">),</span> <span class="n">bbox</span><span class="o">.</span><span class="n">w</span><span class="p">,</span> <span class="n">bbox</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">rect</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">image</span><span class="o">.</span><span class="n">filename</span><span class="p">))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ImageOverlayProcessor.overlay_items_on_backgrounds">
+<a class="viewcode-back" href="../../image_processing.html#image_processing.image_overlay_processor.ImageOverlayProcessor.overlay_items_on_backgrounds">[docs]</a>
+    <span class="k">def</span> <span class="nf">overlay_items_on_backgrounds</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">overlay_area</span><span class="p">:</span> <span class="n">CocoBbox</span><span class="p">,</span> <span class="n">num_images_to_use</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overlay augmented item images (.png) onto background images (.jpg) and save the resulting images as .jpg.</span>
+
+<span class="sd">        This method works in parallel across processors using ProcessPoolExecutor.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            overlay_area (CocoBbox): The bounding box area within which items can be overlaid.</span>
+<span class="sd">            num_images_to_use (int): The number of images to use for each item per background (randomly selected).</span>
+<span class="sd">            seed (int, optional): Seed the randomizer for placing images on backgrounds.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check if the output directory already contains subdirectories like overlays/Library_7/ etc.</span>
+        <span class="n">sub_dirs_in_full_output_dir</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_output_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_output_dir</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span>
+        <span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">sub_dirs_in_full_output_dir</span><span class="p">:</span>
+            <span class="n">confirm</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">input</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Looks like there are </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sub_dirs_in_full_output_dir</span><span class="p">)</span><span class="si">}</span><span class="s2"> subdirectories in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_output_dir</span><span class="si">}</span><span class="s2"> already. &quot;</span>
+                    <span class="s2">&quot;Continuing could overwrite existing overlays. Do you want to proceed with overlay generation? (y/n): &quot;</span>
+                <span class="p">)</span>
+                <span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">confirm</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">]:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Skipping Overlay process.&quot;</span><span class="p">)</span>
+                <span class="k">return</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;overlay_items_on_backgrounds: Overlaying items on backgrounds, this may take a while...&quot;</span><span class="p">)</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+        <span class="c1"># backgrounds is a list of filenames such as [&quot;Library_7.jpg&quot;, ...]</span>
+        <span class="n">backgrounds</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_background_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s2">&quot;.jpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;.jpg&quot;</span><span class="p">))]</span>
+
+        <span class="c1"># paralellize: each process will handle all the overlays for one background</span>
+        <span class="k">with</span> <span class="n">ProcessPoolExecutor</span><span class="p">()</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+            <span class="nb">list</span><span class="p">(</span>
+                <span class="n">tqdm</span><span class="p">(</span>
+                    <span class="n">executor</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+                        <span class="n">_overlay_worker</span><span class="p">,</span>
+                        <span class="n">backgrounds</span><span class="p">,</span>
+                        <span class="n">repeat</span><span class="p">(</span><span class="n">overlay_area</span><span class="p">),</span>
+                        <span class="n">repeat</span><span class="p">(</span><span class="n">num_images_to_use</span><span class="p">),</span>
+                        <span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_item_dir</span><span class="p">),</span>
+                        <span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_background_dir</span><span class="p">),</span>
+                        <span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_output_dir</span><span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Overlaying images (Multi-processing)&quot;</span><span class="p">,</span>
+                    <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">backgrounds</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;overlay_items_on_backgrounds: Done! Overlaid items onto backgrounds.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ImageOverlayProcessor.plot_random_overlays_with_bboxes">
+<a class="viewcode-back" href="../../image_processing.html#image_processing.image_overlay_processor.ImageOverlayProcessor.plot_random_overlays_with_bboxes">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_random_overlays_with_bboxes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_images</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Plot a specified number of overlayed images along with their bounding boxes for verification.</span>
+
+<span class="sd">        Basically, go into a random dir in the output dir (i.e. data/overlays/) then plot an image with its bbox.</span>
+<span class="sd">        Repeat this `num_images` times. Prerequisite: the output dir ) must be populated with images (meaning you have already called</span>
+<span class="sd">        overlay_items_on_backgrounds(...) before this method.)</span>
+
+<span class="sd">        Note: Since the bboxes are stored in .txt files</span>
+
+<span class="sd">        So we could plot 1 image from 145/, 1 from 72/, and so on.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_images (int): The number of images to plot.</span>
+<span class="sd">            seed (int, optional): Seed for the randomizer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+        <span class="c1"># get all background subdirectories in the data/overlay directory</span>
+        <span class="n">backgrounds</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_output_dir</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_images</span><span class="p">):</span>
+            <span class="n">background</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">backgrounds</span><span class="p">)</span>
+            <span class="n">background_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_output_dir</span><span class="p">,</span> <span class="n">background</span><span class="p">)</span>
+            <span class="n">image_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">background_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.jpg&quot;</span><span class="p">)]</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">image_files</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">image_file</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">image_files</span><span class="p">)</span>
+            <span class="n">image_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">background_dir</span><span class="p">,</span> <span class="n">image_file</span><span class="p">)</span>
+            <span class="n">yolo_label_file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">image_path</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;.txt&quot;</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">yolo_label_file_path</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="n">_</span><span class="p">,</span> <span class="n">yolo_bbox</span> <span class="o">=</span> <span class="n">read_yolo_label_file</span><span class="p">(</span><span class="n">yolo_label_file_path</span><span class="p">)</span>
+            <span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
+            <span class="n">bbox</span> <span class="o">=</span> <span class="n">yolo_bbox</span><span class="o">.</span><span class="n">to_coco_bbox</span><span class="p">(</span><span class="n">image</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">image</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">visualize_bbox_area</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">bbox</span><span class="p">)</span>  <span class="c1"># type: ignore</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../image_processing.html#image_processing.image_overlay_processor.main">[docs]</a>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="c1"># example usage, instantiate a processor:</span>
+    <span class="n">processor</span> <span class="o">=</span> <span class="n">ImageOverlayProcessor</span><span class="p">(</span>
+        <span class="n">data_dir</span><span class="o">=</span><span class="n">DATA_DIR</span><span class="p">,</span> <span class="n">background_dir</span><span class="o">=</span><span class="n">BACKGROUND_DIR</span><span class="p">,</span> <span class="n">item_dir</span><span class="o">=</span><span class="n">ITEM_DIR</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="n">OVERLAY_DIR</span>
+    <span class="p">)</span>
+
+    <span class="c1"># you can resize all the backgrounds like this, though they already come resized to TARGET_BACKGROUND_SIZE so won&#39;t do it here.</span>
+    <span class="c1"># processor.resize_all_backgrounds(target_size=TARGET_BACKGROUND_SIZE)</span>
+
+    <span class="c1"># generate the overlay/ dataset. Note: this call will take like 6gb up on your drive and will hog cpu for a min or two.</span>
+    <span class="n">processor</span><span class="o">.</span><span class="n">overlay_items_on_backgrounds</span><span class="p">(</span>
+        <span class="n">overlay_area</span><span class="o">=</span><span class="n">OVERLAYABLE_AREA</span><span class="p">,</span> <span class="n">num_images_to_use</span><span class="o">=</span><span class="n">NUM_IMAGES_TO_USE_DURING_OVERLAY</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">SEED</span>
+    <span class="p">)</span>
+
+    <span class="c1"># let&#39;s make sure it worked by plotting some images and their bbox</span>
+    <span class="n">processor</span><span class="o">.</span><span class="n">plot_random_overlays_with_bboxes</span><span class="p">(</span><span class="n">num_images</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Hamza Khan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

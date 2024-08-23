@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>isaac_yolo package &mdash; Realtime-Binding-Of-Isaac-Item-Detector 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=8d563738"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="logging_config module" href="logging_config.html" />
+    <link rel="prev" title="isaac_web_app package" href="isaac_web_app.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Realtime-Binding-Of-Isaac-Item-Detector
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="constants.html">constants module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generate_augmented_items.html">generate_augmented_items module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="image_processing.html">image_processing package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="isaac_web_app.html">isaac_web_app package</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">isaac_yolo package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-isaac_yolo.isaac_yolo_dataset_generator">isaac_yolo.isaac_yolo_dataset_generator module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair"><code class="docutils literal notranslate"><span class="pre">ImageLabelPair</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair.image_path"><code class="docutils literal notranslate"><span class="pre">ImageLabelPair.image_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair.label_path"><code class="docutils literal notranslate"><span class="pre">ImageLabelPair.label_path</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.copy_files_to_yolo_dataset"><code class="docutils literal notranslate"><span class="pre">copy_files_to_yolo_dataset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.create_dataset_directories"><code class="docutils literal notranslate"><span class="pre">create_dataset_directories()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.delete_overlays_dir"><code class="docutils literal notranslate"><span class="pre">delete_overlays_dir()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.generate_yolo_yaml_config"><code class="docutils literal notranslate"><span class="pre">generate_yolo_yaml_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.get_image_label_file_pairs"><code class="docutils literal notranslate"><span class="pre">get_image_label_file_pairs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.split_dataset"><code class="docutils literal notranslate"><span class="pre">split_dataset()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-isaac_yolo">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="logging_config.html">logging_config module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scraping.html">scraping package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup_everything.html">setup_everything module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">utils module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Realtime-Binding-Of-Isaac-Item-Detector</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">&lt;no title&gt;</a></li>
+      <li class="breadcrumb-item active">isaac_yolo package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/isaac_yolo.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="isaac-yolo-package">
+<h1>isaac_yolo package<a class="headerlink" href="#isaac-yolo-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-isaac_yolo.isaac_yolo_dataset_generator">
+<span id="isaac-yolo-isaac-yolo-dataset-generator-module"></span><h2>isaac_yolo.isaac_yolo_dataset_generator module<a class="headerlink" href="#module-isaac_yolo.isaac_yolo_dataset_generator" title="Link to this heading"></a></h2>
+<p>Takes data/overlay/ and creates a dataset usable by YOLO, including train/test/valid directories.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">isaac_yolo.isaac_yolo_dataset_generator.</span></span><span class="sig-name descname"><span class="pre">ImageLabelPair</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/isaac_yolo/isaac_yolo_dataset_generator.html#ImageLabelPair"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Represents an image and its associated YOLO label file.</p>
+<p>They will be the same except for the extension.
+Ex: image_path=”…/100_rotate_1234.jpg”, label_path=”…/100_rotate_1234.txt”</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair.image_path">
+<span class="sig-name descname"><span class="pre">image_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair.image_path" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair.label_path">
+<span class="sig-name descname"><span class="pre">label_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair.label_path" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_dataset_generator.copy_files_to_yolo_dataset">
+<span class="sig-prename descclassname"><span class="pre">isaac_yolo.isaac_yolo_dataset_generator.</span></span><span class="sig-name descname"><span class="pre">copy_files_to_yolo_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pairs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/isaac_yolo/isaac_yolo_dataset_generator.html#copy_files_to_yolo_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#isaac_yolo.isaac_yolo_dataset_generator.copy_files_to_yolo_dataset" title="Link to this definition"></a></dt>
+<dd><p>Copy image and label files to their respective directories in the YOLO dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pairs</strong> (<em>list</em><em>[</em><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair" title="isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair"><em>ImageLabelPair</em></a><em>]</em>) – The list of image/label pairs to copy.</p></li>
+<li><p><strong>split_name</strong> (<em>str</em>) – The name of the dataset split (‘train’, ‘valid’, or ‘test’).</p></li>
+<li><p><strong>root_dir</strong> (<em>str</em>) – The root directory of the YOLO dataset, ex: “datasets/yolo_isaac_dataset”</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_dataset_generator.create_dataset_directories">
+<span class="sig-prename descclassname"><span class="pre">isaac_yolo.isaac_yolo_dataset_generator.</span></span><span class="sig-name descname"><span class="pre">create_dataset_directories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/isaac_yolo/isaac_yolo_dataset_generator.html#create_dataset_directories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#isaac_yolo.isaac_yolo_dataset_generator.create_dataset_directories" title="Link to this definition"></a></dt>
+<dd><p>Create the directory structure for the YOLO dataset.</p>
+<p>If root_dir == “yolo_isaac_dataset” then the final directory created will be like:
+.
+└── datasets/</p>
+<blockquote>
+<div><dl>
+<dt>└── yolo_isaac_dataset/</dt><dd><p>├── images/
+│   ├── train/
+│   │   ├── img1.jpg
+│   │   └── …
+│   ├── val/
+│   │   ├── img2.jpg
+│   │   └── …
+│   └── test/
+│       ├── img3.jpg
+│       └── ..
+└── labels/</p>
+<blockquote>
+<div><p>├── train/
+│   ├── img1.txt
+│   └── …
+├── val/
+│   ├── img2.txt
+│   └── …
+└── test/</p>
+<blockquote>
+<div><p>├── img3.txt
+└── …</p>
+</div></blockquote>
+</div></blockquote>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>root_dir</strong> (<em>str</em>) – The root of the YOLO dataset (ex. “yolo_isaac_dataset”)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_dataset_generator.delete_overlays_dir">
+<span class="sig-prename descclassname"><span class="pre">isaac_yolo.isaac_yolo_dataset_generator.</span></span><span class="sig-name descname"><span class="pre">delete_overlays_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overlays_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/isaac_yolo/isaac_yolo_dataset_generator.html#delete_overlays_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#isaac_yolo.isaac_yolo_dataset_generator.delete_overlays_dir" title="Link to this definition"></a></dt>
+<dd><p>Delete overlays_dir.</p>
+<p>Irreversible, make sure you have called copy_files_to_yolo_dataset(…) beforehand!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>overlays_dir</strong> (<em>str</em>) – Full path to the overlays directory. Ex: data/overlays</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_dataset_generator.generate_yolo_yaml_config">
+<span class="sig-prename descclassname"><span class="pre">isaac_yolo.isaac_yolo_dataset_generator.</span></span><span class="sig-name descname"><span class="pre">generate_yolo_yaml_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yaml_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'data.yaml'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/isaac_yolo/isaac_yolo_dataset_generator.html#generate_yolo_yaml_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#isaac_yolo.isaac_yolo_dataset_generator.generate_yolo_yaml_config" title="Link to this definition"></a></dt>
+<dd><p>Generate a YOLO configuration file in YAML format.
+The “data.yaml” file will be created in the directory this script is executed.
+Basically, be sure to run this script from realtime-binding-of-isaac-item-detector/
+So that “data.yaml” ends up in the root of the project.</p>
+<p>See: <a class="reference external" href="https://docs.ultralytics.com/datasets/detect/#ultralytics-yolo-format">https://docs.ultralytics.com/datasets/detect/#ultralytics-yolo-format</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>root_dir</strong> (<em>str</em>) – The root directory of the YOLO dataset. Ex. “yolo_isaac_dataset”</p></li>
+<li><p><strong>image_dir</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – (str): The name of the directory holding images in root_dir. Ex: “images”</p></li>
+<li><p><strong>train_dir</strong> (<em>str</em>) – The directory containing training images. Ex: “train”</p></li>
+<li><p><strong>valid_dir</strong> (<em>str</em>) – The directory containing validation images. Ex: “val”</p></li>
+<li><p><strong>test_dir</strong> (<em>str</em>) – The directory containing test images. Ex: “test”</p></li>
+<li><p><strong>yaml_filename</strong> (<em>str</em>) – Name of the generated yaml file. Ex: “data.yaml”</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_dataset_generator.get_image_label_file_pairs">
+<span class="sig-prename descclassname"><span class="pre">isaac_yolo.isaac_yolo_dataset_generator.</span></span><span class="sig-name descname"><span class="pre">get_image_label_file_pairs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overlays_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/isaac_yolo/isaac_yolo_dataset_generator.html#get_image_label_file_pairs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#isaac_yolo.isaac_yolo_dataset_generator.get_image_label_file_pairs" title="Link to this definition"></a></dt>
+<dd><p>Get the list of all pairs of (image.jpg, <a href="#id1"><span class="problematic" id="id2">image_</span></a>.txt) within overlays_dir,
+where image.txt represents the YOLO bbox file.</p>
+<p>overlays_dir should be formatted like:
+.
+└── overlays</p>
+<blockquote>
+<div><p>├── background_1
+│   ├── image1.jpg
+│   ├── image1.txt
+│   └── …
+├── background_2
+│   ├── image2.jpg
+│   ├── image2.txt
+│   └── …
+└── …</p>
+</div></blockquote>
+<p>This function assumes that every “image.jpg” has an associated “image.txt”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>overlays_dir</strong> (<em>str</em>) – The root directory of all images to find image/label pairs.
+Ex: data/overlays</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The list of all (image_path, label_path) filename tuples.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair" title="isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair">ImageLabelPair</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_dataset_generator.main">
+<span class="sig-prename descclassname"><span class="pre">isaac_yolo.isaac_yolo_dataset_generator.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/isaac_yolo/isaac_yolo_dataset_generator.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#isaac_yolo.isaac_yolo_dataset_generator.main" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_dataset_generator.split_dataset">
+<span class="sig-prename descclassname"><span class="pre">isaac_yolo.isaac_yolo_dataset_generator.</span></span><span class="sig-name descname"><span class="pre">split_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pairs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_ratio</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_ratio</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_ratio</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/isaac_yolo/isaac_yolo_dataset_generator.html#split_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#isaac_yolo.isaac_yolo_dataset_generator.split_dataset" title="Link to this definition"></a></dt>
+<dd><p>Split the dataset into training, validation, and test sets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pairs</strong> (<em>List</em><em>[</em><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair" title="isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair"><em>ImageLabelPair</em></a><em>]</em>) – The list of all image/label filename pairs.</p></li>
+<li><p><strong>train_ratio</strong> (<em>float</em>) – The ratio of the training set.</p></li>
+<li><p><strong>valid_ratio</strong> (<em>float</em>) – The ratio of the validation set.</p></li>
+<li><p><strong>test_ratio</strong> (<em>float</em>) – The ratio of the test set.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em>, </em><em>optional</em>) – Seed for random shuffling of the pairs.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Three lists containing the training, validation, and test pairs respectively.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-isaac_yolo">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-isaac_yolo" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="isaac_web_app.html" class="btn btn-neutral float-left" title="isaac_web_app package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="logging_config.html" class="btn btn-neutral float-right" title="logging_config module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Hamza Khan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

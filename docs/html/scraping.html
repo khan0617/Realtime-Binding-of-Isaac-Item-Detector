@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>scraping package &mdash; Realtime-Binding-Of-Isaac-Item-Detector 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=8d563738"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="setup_everything module" href="setup_everything.html" />
+    <link rel="prev" title="logging_config module" href="logging_config.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Realtime-Binding-Of-Isaac-Item-Detector
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="constants.html">constants module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generate_augmented_items.html">generate_augmented_items module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="image_processing.html">image_processing package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="isaac_web_app.html">isaac_web_app package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="isaac_yolo.html">isaac_yolo package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logging_config.html">logging_config module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">scraping package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-scraping.isaac_item">scraping.isaac_item module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#scraping.isaac_item.IsaacItem"><code class="docutils literal notranslate"><span class="pre">IsaacItem</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#scraping.isaac_item.IsaacItem.description"><code class="docutils literal notranslate"><span class="pre">IsaacItem.description</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scraping.isaac_item.IsaacItem.from_dict"><code class="docutils literal notranslate"><span class="pre">IsaacItem.from_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scraping.isaac_item.IsaacItem.get_image_id_tail"><code class="docutils literal notranslate"><span class="pre">IsaacItem.get_image_id_tail()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scraping.isaac_item.IsaacItem.img_url"><code class="docutils literal notranslate"><span class="pre">IsaacItem.img_url</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scraping.isaac_item.IsaacItem.item_id"><code class="docutils literal notranslate"><span class="pre">IsaacItem.item_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scraping.isaac_item.IsaacItem.item_quality"><code class="docutils literal notranslate"><span class="pre">IsaacItem.item_quality</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scraping.isaac_item.IsaacItem.name"><code class="docutils literal notranslate"><span class="pre">IsaacItem.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scraping.isaac_item.IsaacItem.quote"><code class="docutils literal notranslate"><span class="pre">IsaacItem.quote</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scraping.isaac_item.IsaacItem.to_dict"><code class="docutils literal notranslate"><span class="pre">IsaacItem.to_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scraping.isaac_item.IsaacItem.url_encoded_name"><code class="docutils literal notranslate"><span class="pre">IsaacItem.url_encoded_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scraping.isaac_item.IsaacItem.wiki_url"><code class="docutils literal notranslate"><span class="pre">IsaacItem.wiki_url</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scraping.isaac_item.IsaacItem.yolo_class_id"><code class="docutils literal notranslate"><span class="pre">IsaacItem.yolo_class_id</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-scraping.scraper">scraping.scraper module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#scraping.scraper.download_item_images"><code class="docutils literal notranslate"><span class="pre">download_item_images()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scraping.scraper.dump_item_data_to_json"><code class="docutils literal notranslate"><span class="pre">dump_item_data_to_json()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scraping.scraper.fetch_page"><code class="docutils literal notranslate"><span class="pre">fetch_page()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scraping.scraper.get_encoded_name_from_url"><code class="docutils literal notranslate"><span class="pre">get_encoded_name_from_url()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scraping.scraper.get_isaac_items_from_json"><code class="docutils literal notranslate"><span class="pre">get_isaac_items_from_json()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scraping.scraper.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scraping.scraper.parse_isaac_items_from_html"><code class="docutils literal notranslate"><span class="pre">parse_isaac_items_from_html()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-scraping">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="setup_everything.html">setup_everything module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">utils module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Realtime-Binding-Of-Isaac-Item-Detector</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">&lt;no title&gt;</a></li>
+      <li class="breadcrumb-item active">scraping package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/scraping.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="scraping-package">
+<h1>scraping package<a class="headerlink" href="#scraping-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-scraping.isaac_item">
+<span id="scraping-isaac-item-module"></span><h2>scraping.isaac_item module<a class="headerlink" href="#module-scraping.isaac_item" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="scraping.isaac_item.IsaacItem">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scraping.isaac_item.</span></span><span class="sig-name descname"><span class="pre">IsaacItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wiki_url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_quality</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quote</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url_encoded_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yolo_class_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scraping/isaac_item.html#IsaacItem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scraping.isaac_item.IsaacItem" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Dataclass to encapsulate all important info for an Isaac item.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scraping.isaac_item.IsaacItem.description">
+<span class="sig-name descname"><span class="pre">description</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#scraping.isaac_item.IsaacItem.description" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scraping.isaac_item.IsaacItem.from_dict">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scraping/isaac_item.html#IsaacItem.from_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scraping.isaac_item.IsaacItem.from_dict" title="Link to this definition"></a></dt>
+<dd><p>Build an IsaacItem from the provided dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#scraping.isaac_item.IsaacItem" title="scraping.isaac_item.IsaacItem"><code class="xref py py-class docutils literal notranslate"><span class="pre">IsaacItem</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scraping.isaac_item.IsaacItem.get_image_id_tail">
+<span class="sig-name descname"><span class="pre">get_image_id_tail</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/scraping/isaac_item.html#IsaacItem.get_image_id_tail"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scraping.isaac_item.IsaacItem.get_image_id_tail" title="Link to this definition"></a></dt>
+<dd><p>For an item ID like 5.100.145, return “145”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scraping.isaac_item.IsaacItem.img_url">
+<span class="sig-name descname"><span class="pre">img_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#scraping.isaac_item.IsaacItem.img_url" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scraping.isaac_item.IsaacItem.item_id">
+<span class="sig-name descname"><span class="pre">item_id</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#scraping.isaac_item.IsaacItem.item_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scraping.isaac_item.IsaacItem.item_quality">
+<span class="sig-name descname"><span class="pre">item_quality</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#scraping.isaac_item.IsaacItem.item_quality" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scraping.isaac_item.IsaacItem.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#scraping.isaac_item.IsaacItem.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scraping.isaac_item.IsaacItem.quote">
+<span class="sig-name descname"><span class="pre">quote</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#scraping.isaac_item.IsaacItem.quote" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scraping.isaac_item.IsaacItem.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/scraping/isaac_item.html#IsaacItem.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scraping.isaac_item.IsaacItem.to_dict" title="Link to this definition"></a></dt>
+<dd><p>Get the dictionary reprentation of the IsaacItem dataclass.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scraping.isaac_item.IsaacItem.url_encoded_name">
+<span class="sig-name descname"><span class="pre">url_encoded_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#scraping.isaac_item.IsaacItem.url_encoded_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scraping.isaac_item.IsaacItem.wiki_url">
+<span class="sig-name descname"><span class="pre">wiki_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#scraping.isaac_item.IsaacItem.wiki_url" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scraping.isaac_item.IsaacItem.yolo_class_id">
+<span class="sig-name descname"><span class="pre">yolo_class_id</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#scraping.isaac_item.IsaacItem.yolo_class_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-scraping.scraper">
+<span id="scraping-scraper-module"></span><h2>scraping.scraper module<a class="headerlink" href="#module-scraping.scraper" title="Link to this heading"></a></h2>
+<p>scraper.py contains utilities for collecting all Isaac item info we need from the Wiki’s HTML
+and downloading their images. Also provides a utility to dump / retrieve isaac item data from JSON.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="scraping.scraper.download_item_images">
+<span class="sig-prename descclassname"><span class="pre">scraping.scraper.</span></span><span class="sig-name descname"><span class="pre">download_item_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">isaac_items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parallel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scraping/scraper.html#download_item_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scraping.scraper.download_item_images" title="Link to this definition"></a></dt>
+<dd><p>Downloads images for all provided IsaacItems.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>isaac_items</strong> (<em>List</em><em>[</em><a class="reference internal" href="#scraping.isaac_item.IsaacItem" title="scraping.isaac_item.IsaacItem"><em>IsaacItem</em></a><em>]</em>) – A list of IsaacItems.</p></li>
+<li><p><strong>data_dir</strong> (<em>str</em>) – The root directory where image folders will be saved.</p></li>
+<li><p><strong>item_dir</strong> (<em>str</em>) – Subdirectory within data_dir for item images.
+Ex: If you want the individual item folders to be stored in ‘data/items/, pass in
+data_dir=’data’, and item_dir=’items’. This function handles concatenation.</p></li>
+<li><p><strong>parallel</strong> (<em>bool</em>) – If true, parallelize the downloads, else do them sequentially.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scraping.scraper.dump_item_data_to_json">
+<span class="sig-prename descclassname"><span class="pre">scraping.scraper.</span></span><span class="sig-name descname"><span class="pre">dump_item_data_to_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">isaac_items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scraping/scraper.html#dump_item_data_to_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scraping.scraper.dump_item_data_to_json" title="Link to this definition"></a></dt>
+<dd><p>Write the dictionary representation for each item into the specified filename.</p>
+<p>In the JSON file, each object is represented as follows.
+<cite>&lt;isaac_item.get_image_id_tail()&gt;: {… the whole object …}</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>isaac_items</strong> (<em>list</em><em>[</em><a class="reference internal" href="#scraping.isaac_item.IsaacItem" title="scraping.isaac_item.IsaacItem"><em>IsaacItem</em></a><em>]</em>) – The IsaacItems to dump to the file.</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) – Where to save the json file.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scraping.scraper.fetch_page">
+<span class="sig-prename descclassname"><span class="pre">scraping.scraper.</span></span><span class="sig-name descname"><span class="pre">fetch_page</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cached_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scraping/scraper.html#fetch_page"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scraping.scraper.fetch_page" title="Link to this definition"></a></dt>
+<dd><p>Fetches the HTML content of a given webpage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>url</strong> (<em>str</em>) – The URL of the webpage to fetch.</p></li>
+<li><p><strong>use_cached_results</strong> (<em>bool</em>) – If False, always make a GET request to the provided URL.
+When True, true to utilize scraper_cache/cache.json, which stores previous
+responses. If the url is found in the cache, do not make another GET request.
+Requests are always cached independent of the value of use_cached_results.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The HTML content of the page else None if the request fails.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scraping.scraper.get_encoded_name_from_url">
+<span class="sig-prename descclassname"><span class="pre">scraping.scraper.</span></span><span class="sig-name descname"><span class="pre">get_encoded_name_from_url</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scraping/scraper.html#get_encoded_name_from_url"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scraping.scraper.get_encoded_name_from_url" title="Link to this definition"></a></dt>
+<dd><p>Extracts the URL-encoded name from a wiki URL.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>url</strong> (<em>str</em>) – The URL of the wiki page.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The URL-encoded item name.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scraping.scraper.get_isaac_items_from_json">
+<span class="sig-prename descclassname"><span class="pre">scraping.scraper.</span></span><span class="sig-name descname"><span class="pre">get_isaac_items_from_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scraping/scraper.html#get_isaac_items_from_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scraping.scraper.get_isaac_items_from_json" title="Link to this definition"></a></dt>
+<dd><p>Attempt to parse IsaacItems from the provided json filename.</p>
+<p>Isaac items should be stored in the following example format (item.get_image_id_tail() is the main key):</p>
+<dl class="simple">
+<dt>“396”: {</dt><dd><p>“name”: “Ventricle Razor”,
+“item_id”: “5.100.396”,
+“img_url”: “<a class="reference external" href="https://static.wikia.nocookie.net/bindingofisaacre_gamepedia/images/9/97/Collectible_Ventricle_Razor_icon.png/revision/latest?cb=20210821162403">https://static.wikia.nocookie.net/bindingofisaacre_gamepedia/images/9/97/Collectible_Ventricle_Razor_icon.png/revision/latest?cb=20210821162403</a>”,
+“wiki_url”: “<a class="reference external" href="https://bindingofisaacrebirth.fandom.com/wiki/Ventricle_Razor">https://bindingofisaacrebirth.fandom.com/wiki/Ventricle_Razor</a>”,
+“description”: “Creates up to two portals that remain even if Isaac leaves the room. Upon entering a portal, Isaac is teleported to the other portal.”,
+“item_quality”: “1”,
+“quote”: “Short cutter”,
+“url_encoded_name”: “Ventricle_Razor”,
+“yolo_class_id”: “91”</p>
+</dd>
+</dl>
+<p>},</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<em>str</em>) – The name of the json file with IsaacItem info.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<a class="reference internal" href="#scraping.isaac_item.IsaacItem" title="scraping.isaac_item.IsaacItem"><code class="xref py py-class docutils literal notranslate"><span class="pre">IsaacItem</span></code></a>] | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list of IsaacItems. Upon failure, return None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scraping.scraper.main">
+<span class="sig-prename descclassname"><span class="pre">scraping.scraper.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/scraping/scraper.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scraping.scraper.main" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scraping.scraper.parse_isaac_items_from_html">
+<span class="sig-prename descclassname"><span class="pre">scraping.scraper.</span></span><span class="sig-name descname"><span class="pre">parse_isaac_items_from_html</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">html</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scraping/scraper.html#parse_isaac_items_from_html"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scraping.scraper.parse_isaac_items_from_html" title="Link to this definition"></a></dt>
+<dd><p>Parses IsaacItem objects from the HTML content.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>html</strong> (<em>str</em>) – The HTML content of the webpage.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of all IsaacItems from the HTML</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-scraping">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-scraping" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="logging_config.html" class="btn btn-neutral float-left" title="logging_config module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="setup_everything.html" class="btn btn-neutral float-right" title="setup_everything module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Hamza Khan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

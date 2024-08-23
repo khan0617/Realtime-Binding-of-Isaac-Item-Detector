@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>image_processing.data_augmentor &mdash; Realtime-Binding-Of-Isaac-Item-Detector 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=8d563738"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Realtime-Binding-Of-Isaac-Item-Detector
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../constants.html">constants module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generate_augmented_items.html">generate_augmented_items module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../image_processing.html">image_processing package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../isaac_web_app.html">isaac_web_app package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../isaac_yolo.html">isaac_yolo package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../logging_config.html">logging_config module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scraping.html">scraping package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../setup_everything.html">setup_everything module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../utils.html">utils module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Realtime-Binding-Of-Isaac-Item-Detector</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">image_processing.data_augmentor</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for image_processing.data_augmentor</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">data_augmentor.py provides utilities to generate augmentations </span>
+<span class="sd">on the Isaac Item Images to increase our dataset size.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Iterable</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageEnhance</span><span class="p">,</span> <span class="n">ImageFilter</span><span class="p">,</span> <span class="n">ImageOps</span>
+
+<span class="kn">from</span> <span class="nn">constants</span> <span class="kn">import</span> <span class="n">DATA_DIR</span><span class="p">,</span> <span class="n">ITEM_DIR</span><span class="p">,</span> <span class="n">SEED</span><span class="p">,</span> <span class="n">UNMODIFIED_FILE_NAME</span>
+<span class="kn">from</span> <span class="nn">image_processing.augmentation</span> <span class="kn">import</span> <span class="n">Augmentation</span>
+<span class="kn">from</span> <span class="nn">logging_config</span> <span class="kn">import</span> <span class="n">configure_logging</span>
+
+<span class="n">configure_logging</span><span class="p">()</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="augment_image">
+<a class="viewcode-back" href="../../image_processing.html#image_processing.data_augmentor.augment_image">[docs]</a>
+<span class="k">def</span> <span class="nf">augment_image</span><span class="p">(</span>
+    <span class="n">image_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">augmentations</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Augmentation</span><span class="p">]</span> <span class="o">|</span> <span class="n">Augmentation</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">num_augmented</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">15</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Augments an image with various transformations and saves the augmented images to the specified directory.</span>
+
+<span class="sd">    This function applies a series of augmentation techniques to the input image, including rotation, flipping,</span>
+<span class="sd">    and adding noise among others. The augmented images are saved in the output directory with descriptive filenames indicating</span>
+<span class="sd">    the type(s) and order of augmentation(s) applied.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        image_path (str): The file path of the original image to be augmented.</span>
+<span class="sd">        output_dir (str): The directory where the augmented images will be saved. The directory will be created if it doesn&#39;t exist.</span>
+<span class="sd">            Ex: &quot;data/items/145&quot;</span>
+<span class="sd">        augmentations (Iterable[Union[Augmentation, Iterable[Augmentation]]], optional): An iterable of Augmentation or Iterables of</span>
+<span class="sd">            Augmentations specifying which augmentations to apply. If None, a default set of all augmentations is applied.</span>
+<span class="sd">            Ex: If you pass in `[(Augmentation.ROTATE, Augmentation.FLIP), Augmentation.NOISE]`, for the first tuple,</span>
+<span class="sd">                all augmented images will first be rotated, THEN flipped. For the 2nd item, those images will only have NOISE applied.</span>
+<span class="sd">                If num_augmented is 5, then 5 images with ROTATE -&gt; FLIP, and 5 images with just FLIP will be created, for a total of 10.</span>
+<span class="sd">        num_augmented (int, optional): The number of augmented images to generate per augmentation technique.</span>
+<span class="sd">            Ex: If num_augmented is 15, and you pass in augmentations=[Augmentation.ROTATE] we generate 15 rotated images at random degrees.</span>
+<span class="sd">            num_augmented only applies to augmentations which make sense to have multiple (i.e. not FLIP).</span>
+<span class="sd">        seed (int, optional): Random seed for reproducibility. If None, the seed is not set.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">augmentations</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">augmentations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">Augmentation</span><span class="p">)</span>  <span class="c1"># apply all the augmentations by default</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># may need to do a convert() otherwise numpy doesn&#39;t preserve the png transparent backround and everything turns black.</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">file_extension</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">file_extension</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;.png&quot;</span><span class="p">,</span> <span class="s2">&quot;.PNG&quot;</span><span class="p">]:</span>
+        <span class="n">image_pil</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;RGBA&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">image_pil</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
+    <span class="n">image_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">image_pil</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">aug</span> <span class="ow">in</span> <span class="n">augmentations</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">aug</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">aug</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">_apply_and_save_combined_augmentations</span><span class="p">(</span><span class="n">image_np</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">aug</span><span class="p">,</span> <span class="n">num_augmented</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_apply_and_save_single_augmentation</span><span class="p">(</span><span class="n">image_np</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">aug</span><span class="p">,</span> <span class="n">num_augmented</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_apply_and_save_combined_augmentations</span><span class="p">(</span>
+    <span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">augmentations</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Augmentation</span><span class="p">],</span> <span class="n">num_augmented</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Applies combined augmentations to an image and saves the result.</span>
+
+<span class="sd">    This method applies augmentations in sequence to the provided image. If all augmentations</span>
+<span class="sd">    in the iterable are operations that do not produce unique results when repeated, it applies the</span>
+<span class="sd">    augmentations only once. Otherwise, it applies the sequence multiple times as specified by `num_augmented`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        image (np.ndarray): The original image to be augmented.</span>
+<span class="sd">        output_dir (str): The directory where the augmented images will be saved.</span>
+<span class="sd">        augmentations (Iterable[Augmentation, ...]): A collection of Augmentation enum values indicating the sequence of augmentations to apply.</span>
+<span class="sd">        num_augmented (int): The number of times to apply the sequence of augmentations. This value is overridden to 1 if all augmentations</span>
+<span class="sd">                            are in the non-repeating category.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">sub_aug</span> <span class="ow">in</span> <span class="n">Augmentation</span><span class="o">.</span><span class="n">operations_to_not_repeat</span><span class="p">()</span> <span class="k">for</span> <span class="n">sub_aug</span> <span class="ow">in</span> <span class="n">augmentations</span><span class="p">):</span>
+        <span class="n">_apply_and_save_helper</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">augmentations</span><span class="p">,</span> <span class="n">num_augmented</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_apply_and_save_helper</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">augmentations</span><span class="p">,</span> <span class="n">num_augmented</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_apply_and_save_single_augmentation</span><span class="p">(</span>
+    <span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">augmentation</span><span class="p">:</span> <span class="n">Augmentation</span><span class="p">,</span> <span class="n">num_augmented</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Applies a single augmentation to an image and saves the result.</span>
+
+<span class="sd">    This method applies a specified augmentation to the provided image. If the augmentation is categorized</span>
+<span class="sd">    as non-repeating (i.e., it does not produce unique results when applied multiple times), it applies the</span>
+<span class="sd">    augmentation only once. Otherwise, it applies the augmentation multiple times as specified by `num_augmented`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        image (np.ndarray): The original image to be augmented.</span>
+<span class="sd">        output_dir (str): The directory where the augmented images will be saved.</span>
+<span class="sd">        augmentation (Augmentation): An Augmentation enum value specifying the augmentation to apply.</span>
+<span class="sd">        num_augmented (int): The number of times to apply the augmentation. This value is overridden to 1 if the augmentation</span>
+<span class="sd">                            is in the non-repeating category.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">augmentation</span> <span class="ow">in</span> <span class="n">Augmentation</span><span class="o">.</span><span class="n">operations_to_not_repeat</span><span class="p">():</span>
+        <span class="n">_apply_and_save_helper</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="p">(</span><span class="n">augmentation</span><span class="p">,),</span> <span class="n">num_augmented</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_apply_and_save_helper</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="p">(</span><span class="n">augmentation</span><span class="p">,),</span> <span class="n">num_augmented</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_apply_and_save_helper</span><span class="p">(</span>
+    <span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">augmentations</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Augmentation</span><span class="p">],</span> <span class="n">num_augmented</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Applies specified augmentations to an image and saves the augmented images.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        image (np.ndarray): The original image to be augmented.</span>
+<span class="sd">        output_dir (str): The directory where the augmented images will be saved.</span>
+<span class="sd">        augmentations (Iterable[Augmentation, ...]): A collection of Augmentation enum values specifying the augmentations to apply.</span>
+<span class="sd">        num_augmented (int): The number of augmented versions of the image to generate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_augmented</span><span class="p">):</span>
+        <span class="n">augmented_image</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">aug</span> <span class="ow">in</span> <span class="n">augmentations</span><span class="p">:</span>
+            <span class="n">augmented_image</span> <span class="o">=</span> <span class="n">_dispatch_augmentation</span><span class="p">(</span><span class="n">augmented_image</span><span class="p">,</span> <span class="n">aug</span><span class="p">)</span>
+        <span class="n">_save_image</span><span class="p">(</span><span class="n">augmented_image</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">augmentations</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_save_image</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">augmentations</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Augmentation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Saves the augmented image to the specified directory with a descriptive filename.</span>
+
+<span class="sd">    Images are saved with the list of augmentations applied to them in order. For example, if an image is</span>
+<span class="sd">    1st rotated, then had color jitter, then noise last, the image will be saved as:</span>
+<span class="sd">    rotate_color_jitter_noise_1234.png, where 1234 are the 1st 4 digits of a random uuid. The general template is:</span>
+<span class="sd">    `{augmentation1_augmentation2_..._augmentationX}_{4 digits of uuid}.png`</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        image (np.ndarray): The augmented image as a NumPy array.</span>
+<span class="sd">        output_dir (str): The directory where the image will be saved.</span>
+<span class="sd">        augmentations (Iterable[Augmentation, ...]): A collection of Augmentation enum values specifying the augmentations applied.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">image_pil</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">augmentations_applied</span> <span class="o">=</span> <span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">aug</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">aug</span> <span class="ow">in</span> <span class="n">augmentations</span><span class="p">)</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">augmentations_applied</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">.png&quot;</span>  <span class="c1"># apply a random uuid prefix to each image for uniqueness</span>
+    <span class="p">)</span>
+    <span class="n">filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;_save_image: Saving img to </span><span class="si">%s</span><span class="s2">, image size is: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">image_pil</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+    <span class="n">image_pil</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+
+
+<span class="c1"># pylint: disable=too-many-return-statements, too-many-branches</span>
+<span class="k">def</span> <span class="nf">_dispatch_augmentation</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">augmentation</span><span class="p">:</span> <span class="n">Augmentation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dispatches the given augmentation to the appropriate method.</span>
+
+<span class="sd">    Serves as a dispatcher table for the specified augmentation.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        image (np.ndarray): The image to augment as an np array.</span>
+<span class="sd">        augmentation (Augmentation): The augmentation to apply to the image.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The augmented image as an np array.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">augmentation</span> <span class="ow">is</span> <span class="n">Augmentation</span><span class="o">.</span><span class="n">ROTATE</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_rotate</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">augmentation</span> <span class="ow">is</span> <span class="n">Augmentation</span><span class="o">.</span><span class="n">NOISE</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_noise</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">augmentation</span> <span class="ow">is</span> <span class="n">Augmentation</span><span class="o">.</span><span class="n">VERTICAL_FLIP</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_vertical_flip</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">augmentation</span> <span class="ow">is</span> <span class="n">Augmentation</span><span class="o">.</span><span class="n">HORIZONTAL_MIRROR</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_horizontal_mirror</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">augmentation</span> <span class="ow">is</span> <span class="n">Augmentation</span><span class="o">.</span><span class="n">BRIGHTNESS</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_brightness</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">augmentation</span> <span class="ow">is</span> <span class="n">Augmentation</span><span class="o">.</span><span class="n">CONTRAST</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_contrast</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">augmentation</span> <span class="ow">is</span> <span class="n">Augmentation</span><span class="o">.</span><span class="n">SCALE</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_scale</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">augmentation</span> <span class="ow">is</span> <span class="n">Augmentation</span><span class="o">.</span><span class="n">TRANSLATE</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_translate</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">augmentation</span> <span class="ow">is</span> <span class="n">Augmentation</span><span class="o">.</span><span class="n">SHEAR</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_shear</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">augmentation</span> <span class="ow">is</span> <span class="n">Augmentation</span><span class="o">.</span><span class="n">COLOR_JITTER</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_color_jitter</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">augmentation</span> <span class="ow">is</span> <span class="n">Augmentation</span><span class="o">.</span><span class="n">SHARPNESS</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_sharpness</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">augmentation</span> <span class="ow">is</span> <span class="n">Augmentation</span><span class="o">.</span><span class="n">SMOOTH</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_smooth</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unimplemented Augmentation: </span><span class="si">{</span><span class="n">augmentation</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_rotate</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rotates the image by a random angle in the range +-170 degrees&quot;&quot;&quot;</span>
+    <span class="n">angle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mi">170</span><span class="p">,</span> <span class="mi">170</span><span class="p">)</span>
+    <span class="n">image_pil</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">rotated_image</span> <span class="o">=</span> <span class="n">image_pil</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="n">angle</span><span class="p">,</span> <span class="n">resample</span><span class="o">=</span><span class="n">Image</span><span class="o">.</span><span class="n">Resampling</span><span class="o">.</span><span class="n">BICUBIC</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rotated_image</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_noise</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adds random Gaussian noise to the image.&quot;&quot;&quot;</span>
+    <span class="n">noise_level</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>  <span class="c1"># RGBA image, let&#39;s not corrupt the alpha (transparency) channel.</span>
+        <span class="n">rgb</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="n">image</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">],</span> <span class="n">image</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">3</span><span class="p">:]</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span> <span class="o">*</span> <span class="n">noise_level</span><span class="p">,</span> <span class="n">rgb</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># apply noise only to RGB</span>
+        <span class="n">noisy_rgb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">rgb</span> <span class="o">+</span> <span class="n">noise</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">noisy_rgb</span><span class="p">,</span> <span class="n">alpha</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># RGB image</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span> <span class="o">*</span> <span class="n">noise_level</span><span class="p">,</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">noisy_image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">image</span> <span class="o">+</span> <span class="n">noise</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">noisy_image</span>  <span class="c1"># type: ignore</span>
+
+
+<span class="k">def</span> <span class="nf">_vertical_flip</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Flip the image vertically (top to bottom flip)&quot;&quot;&quot;</span>
+    <span class="n">flipped_pil_img</span> <span class="o">=</span> <span class="n">ImageOps</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">image</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">flipped_pil_img</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_horizontal_mirror</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="s2">&quot;Mirror the image horizontally (left to right flip)&quot;</span>
+    <span class="n">mirrored_pil_img</span> <span class="o">=</span> <span class="n">ImageOps</span><span class="o">.</span><span class="n">mirror</span><span class="p">(</span><span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">image</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mirrored_pil_img</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_brightness</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adjusts the brightness of the image with a random factor in the range [0.5, 1.5].&quot;&quot;&quot;</span>
+    <span class="n">factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+    <span class="n">image_pil</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">bright_image</span> <span class="o">=</span> <span class="n">ImageEnhance</span><span class="o">.</span><span class="n">Brightness</span><span class="p">(</span><span class="n">image_pil</span><span class="p">)</span><span class="o">.</span><span class="n">enhance</span><span class="p">(</span><span class="n">factor</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bright_image</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_contrast</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adjusts the contrast of the image with a random factor in the range [0.5, 1.5].&quot;&quot;&quot;</span>
+    <span class="n">factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+    <span class="n">image_pil</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">contrast_image</span> <span class="o">=</span> <span class="n">ImageEnhance</span><span class="o">.</span><span class="n">Contrast</span><span class="p">(</span><span class="n">image_pil</span><span class="p">)</span><span class="o">.</span><span class="n">enhance</span><span class="p">(</span><span class="n">factor</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">contrast_image</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_scale</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Scales the image randomly while keeping the original size, using a scaling factor in range [0.8, 1.2]&quot;&quot;&quot;</span>
+    <span class="n">scale_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">)</span>
+    <span class="n">image_pil</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">scaled_image</span> <span class="o">=</span> <span class="n">ImageOps</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">image_pil</span><span class="p">,</span> <span class="n">scale_factor</span><span class="p">)</span>
+    <span class="n">scaled_image_back_to_original_size</span> <span class="o">=</span> <span class="n">ImageOps</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">scaled_image</span><span class="p">,</span> <span class="n">image_pil</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">scaled_image_back_to_original_size</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_translate</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Translates the image randomly along the x and y axis up to 20% of img dimensions.&quot;&quot;&quot;</span>
+    <span class="n">max_trans</span> <span class="o">=</span> <span class="mf">0.2</span>
+    <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># build the translation matrix</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">max_trans</span><span class="p">,</span> <span class="n">max_trans</span><span class="p">)</span> <span class="o">*</span> <span class="n">width</span><span class="p">)</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">max_trans</span><span class="p">,</span> <span class="n">max_trans</span><span class="p">)</span> <span class="o">*</span> <span class="n">height</span><span class="p">)</span>
+
+    <span class="c1"># fmt:off</span>
+    <span class="c1"># the first 3 elements represent the changing of x, last 3 represent changing y</span>
+    <span class="n">translation_matrix</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dy</span><span class="p">)</span>  <span class="c1"># https://en.wikipedia.org/wiki/Transformation_matrix#Affine_transformations </span>
+    <span class="c1"># fmt: on</span>
+
+    <span class="n">image_pil</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">translated_image</span> <span class="o">=</span> <span class="n">image_pil</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">image_pil</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Transform</span><span class="o">.</span><span class="n">AFFINE</span><span class="p">,</span> <span class="n">translation_matrix</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">translated_image</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_shear</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Shears the image randomly with a shear factor in range [-0.3, 0.3].&quot;&quot;&quot;</span>
+    <span class="n">shear_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">image_pil</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">shear_matrix</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">shear_factor</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># https://mathworld.wolfram.com/ShearMatrix.html</span>
+    <span class="n">sheared_image</span> <span class="o">=</span> <span class="n">image_pil</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">image_pil</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Transform</span><span class="o">.</span><span class="n">AFFINE</span><span class="p">,</span> <span class="n">shear_matrix</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sheared_image</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_color_jitter</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Randomly adjust color balance of the image, with a factor in range [0.3, 1.0].&quot;&quot;&quot;</span>
+    <span class="n">color_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">image_pil</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">jittered_image</span> <span class="o">=</span> <span class="n">ImageEnhance</span><span class="o">.</span><span class="n">Color</span><span class="p">(</span><span class="n">image_pil</span><span class="p">)</span><span class="o">.</span><span class="n">enhance</span><span class="p">(</span><span class="n">color_factor</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">jittered_image</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_sharpness</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adjusts the sharpness of the image with a random factor in the range [0.5, 1.5]&quot;&quot;&quot;</span>
+    <span class="n">factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+    <span class="n">image_pil</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">sharpened_image</span> <span class="o">=</span> <span class="n">ImageEnhance</span><span class="o">.</span><span class="n">Sharpness</span><span class="p">(</span><span class="n">image_pil</span><span class="p">)</span><span class="o">.</span><span class="n">enhance</span><span class="p">(</span><span class="n">factor</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sharpened_image</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_smooth</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Smooth the image, applying the following smoothing filter kernel from PIL.</span>
+
+<span class="sd">    filterargs = (3, 3), 13, 0, (</span>
+<span class="sd">        1, 1, 1,</span>
+<span class="sd">        1, 5, 1,</span>
+<span class="sd">        1, 1, 1,</span>
+<span class="sd">    )</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">image_pil</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">filtered_image</span> <span class="o">=</span> <span class="n">image_pil</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">ImageFilter</span><span class="o">.</span><span class="n">SMOOTH</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">filtered_image</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../image_processing.html#image_processing.data_augmentor.main">[docs]</a>
+<span class="k">def</span> <span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># example usage. We&#39;ll apply every augmentation to the &quot;8_Inch_Nails&quot; item.</span>
+    <span class="n">item_id</span> <span class="o">=</span> <span class="s2">&quot;359&quot;</span>
+    <span class="n">image_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_DIR</span><span class="p">,</span> <span class="n">ITEM_DIR</span><span class="p">,</span> <span class="n">item_id</span><span class="p">,</span> <span class="n">UNMODIFIED_FILE_NAME</span><span class="p">)</span>
+    <span class="n">output_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;new_dir&quot;</span><span class="p">,</span> <span class="n">item_id</span><span class="p">)</span>
+
+    <span class="c1"># produce 1 image for each augmentation.</span>
+    <span class="n">augment_image</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">num_augmented</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">SEED</span><span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Hamza Khan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -24,7 +24,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-# build/  # commented out so I can add the sphinx docs from build/
+build/
 develop-eggs/
 dist/
 downloads/
