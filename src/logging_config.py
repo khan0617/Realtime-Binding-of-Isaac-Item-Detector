@@ -1,3 +1,9 @@
+"""
+`logging_config.py`
+
+Helper to configure the logger object.
+"""
+
 import logging
 import os
 

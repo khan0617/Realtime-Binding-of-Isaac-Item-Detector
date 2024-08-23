@@ -9,6 +9,10 @@ data.yaml
 *.json
 *.png
 
+# sphinx stuff to ignore
+_sources/
+_static/
+
 # below is the github recommended python .gitignore (above is my additions)
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -20,7 +24,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
+# build/  # commented out so I can add the sphinx docs from build/
 develop-eggs/
 dist/
 downloads/

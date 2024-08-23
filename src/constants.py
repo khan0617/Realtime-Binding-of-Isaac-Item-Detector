@@ -1,3 +1,9 @@
+"""
+`constants.py`
+
+Contains constants for the entire project.
+"""
+
 from image_processing.bbox import CocoBbox
 
 WIKI_HOMEPAGE_ROOT = "https://bindingofisaacrebirth.fandom.com/"
