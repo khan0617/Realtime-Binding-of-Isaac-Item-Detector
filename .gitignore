@@ -9,10 +9,6 @@ data.yaml
 *.json
 *.png
 
-# sphinx stuff to ignore
-_sources/
-_static/
-
 # below is the github recommended python .gitignore (above is my additions)
 # Byte-compiled / optimized / DLL files
 __pycache__/
