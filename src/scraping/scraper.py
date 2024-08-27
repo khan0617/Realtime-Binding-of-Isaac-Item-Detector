@@ -121,7 +121,7 @@ def parse_isaac_items_from_html(html: str) -> list[IsaacItem]:
         name_td = all_tds[0]
         name = name_td.find("a").text.strip()
 
-        # "Tonsil" item shares item ID "5.100.474" with "Broekn Glass Cannon"
+        # "Tonsil" item shares item ID "5.100.474" with "Broken Glass Cannon"
         # this item was removed in repentence so we're just gonna skip this
         if "tonsil" in name.lower():
             continue

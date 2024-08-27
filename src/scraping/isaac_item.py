@@ -39,7 +39,7 @@ class IsaacItem:
     # possible values are "0"-"718".
     yolo_class_id: str
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, str]:
         """Get the dictionary reprentation of the IsaacItem dataclass."""
         return asdict(self)
 

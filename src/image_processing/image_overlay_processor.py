@@ -164,7 +164,7 @@ def _overlay_worker(
 
 
 class ImageOverlayProcessor:
-    """Repsonsible for overlaying Isaac item images onto various backgrounds."""
+    """Responsible for overlaying Isaac item images onto various backgrounds."""
 
     def __init__(self, data_dir: str, background_dir: str, item_dir: str, output_dir: str) -> None:
         """

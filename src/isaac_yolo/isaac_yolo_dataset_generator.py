@@ -275,7 +275,7 @@ def generate_yolo_yaml_config(
     with open(yaml_filename, "w", encoding="utf-8") as f:
         yaml.dump(config, f, sort_keys=False)
 
-    logger.info("generate_yolo_yaml_config: Generated YOLO config file at %s", os.path.join(root_dir, "dataset.yaml"))
+    logger.info("generate_yolo_yaml_config: Generated YOLO config file: %s", yaml_filename)
 
 
 def main() -> None:  # pylint: disable=missing-function-docstring
