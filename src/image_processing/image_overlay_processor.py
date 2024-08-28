@@ -193,7 +193,8 @@ class ImageOverlayProcessor:
         self._full_output_dir = os.path.join(self.data_dir, self.output_dir)
         os.makedirs(self._full_output_dir, exist_ok=True)
 
-    def _resize_and_pad_image(self, image: Image.Image, target_size: tuple[int, int]) -> Image.Image:
+    @staticmethod
+    def _resize_and_pad_image(image: Image.Image, target_size: tuple[int, int]) -> Image.Image:
         """
         Resize and pad the image to fit the target size while maintaining aspect ratio.
 
