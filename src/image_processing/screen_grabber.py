@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pygetwindow as gw  # type: ignore
 from mss.windows import MSS as mss
-from PIL import Image
 from pygetwindow import Win32Window
 
 from constants import ISAAC_WINDOW_TITLE
@@ -66,7 +65,7 @@ class ScreenGrabber:
             monitor = {"top": window.top, "left": window.left, "width": window.width, "height": window.height}
             frame = np.array(sct.grab(monitor))
             color_corrected_image = cv2.cvtColor(frame, cv2.COLOR_BGRA2RGB)  # pylint: disable=no-member
-            return np.array(color_corrected_image)
+            return color_corrected_image
 
     def display_captured_window(self, frame: np.ndarray) -> None:
         """
@@ -85,7 +84,7 @@ def main():
     screen_grabber = ScreenGrabber()
 
     # get the window object for the Isaac game
-    #   make sure you have the game running and it's in the foreground.
+    # make sure you have the game running and it's in the foreground.
     window = screen_grabber.get_isaac_window()
     print(window)
     if window is None:
