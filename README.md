@@ -14,3 +14,7 @@ This `isaac_backgrounds` folder contains item backgrounds which I manually downl
 This folder is only a small subset of the images in the gallery. I picked them to represent a variety of floors and rooms. I had to convert the images from the gallery from `.webp` to `.jpg` here.
 
 # TODO: update the docs again at the end of the project
+
+# prereqs
+binding of isaac installed (tested w/ Repentance)
+Windows (macos and linux window grabbing unsupported)

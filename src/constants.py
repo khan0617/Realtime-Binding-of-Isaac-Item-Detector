@@ -41,3 +41,10 @@ YOLO_DATASET_YAML_FILE = "data.yaml"
 TRAIN_RATIO = 0.8
 VALID_RATIO = 0.1
 TEST_RATIO = 0.1
+
+MODEL_WEIGHTS_100_EPOCHS_PATH = "model_weights/isaac_yolo_100_epochs_v1.pt"
+
+# the name of the repentence window
+# for repentence, the exact window title is: "Binding of Isaac: Repentance"
+# but so this can work with older versions I'll remove "Repentance"
+ISAAC_WINDOW_TITLE = "Binding of Isaac"

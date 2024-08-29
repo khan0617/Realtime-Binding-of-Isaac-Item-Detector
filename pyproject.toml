@@ -34,6 +34,9 @@ dependencies = [
     "ultralytics",
     "numpy",
     "ipykernel",
+    "mss",
+    "pywin32",
+    "pygetwindow"
 ]
 
 [project.urls]

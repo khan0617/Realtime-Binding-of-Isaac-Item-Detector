@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Iterable, cast
 
 import cv2
@@ -11,6 +12,7 @@ import numpy as np
 from ultralytics import YOLO  # type: ignore
 from ultralytics.engine.results import Boxes, Results  # type: ignore
 
+from constants import MODEL_WEIGHTS_100_EPOCHS_PATH, TARGET_BACKGROUND_SIZE
 from logging_config import configure_logging
 
 configure_logging()
@@ -90,7 +92,7 @@ class IsaacYoloModel:
 
     def predict(self, image_paths: list[str], stream: bool = False) -> Iterable[Results]:
         """
-        Perform object detection using the YOLO model on the image supplied by image_path.
+        Perform object detection using the YOLO model on the images supplied by image_paths.
 
         Args:
             image_paths (str): List of paths to images to run inference on.
@@ -159,3 +161,26 @@ class IsaacYoloModel:
             if save_path is not None:
                 cv2.imwrite(save_path, copy_of_orig_img)
                 logger.info("Image with detections saved to %s", save_path)
+
+
+def main():
+    """Example usage of IsaacYoloModel."""
+    isaac_yolo_model = IsaacYoloModel(path_to_weights=MODEL_WEIGHTS_100_EPOCHS_PATH, img_size=TARGET_BACKGROUND_SIZE)
+
+    # download some images you find online for this to work.
+    # since these are in my downloads folder which is not in this repo.
+    image_paths = [
+        Path(r"C:\Users\hamza\Downloads\angel_room.webp"),
+        Path(r"C:\Users\hamza\Downloads\death_certificate.jpg"),
+        Path(r"C:\Users\hamza\Downloads\devil_room.jpg"),
+        Path(r"C:\Users\hamza\Downloads\devil_room_2.jpg"),
+        Path(r"C:\Users\hamza\Downloads\devil_room_3.webp"),
+    ]
+
+    results = isaac_yolo_model.predict(image_paths=image_paths)
+    isaac_yolo_model.visulize_results(results, show=True)
+    print(f"{results = }")
+
+
+if __name__ == "__main__":
+    main()
