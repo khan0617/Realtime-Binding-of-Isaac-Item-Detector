@@ -7,6 +7,7 @@ Works for Windows operating systems only.
 
 import logging
 import sys
+from typing import cast
 
 import cv2
 import matplotlib.pyplot as plt
@@ -28,9 +29,12 @@ class ScreenGrabber:
     """
 
     def __init__(self) -> None:
-        self._mss = mss()
+        self._isaac_window = cast(Win32Window, self._get_isaac_window())
+        if not self._isaac_window:
+            logger.error("No Isaac window found, exiting.")
+            sys.exit(1)
 
-    def get_isaac_window(self) -> Win32Window | None:
+    def _get_isaac_window(self) -> Win32Window | None:
         """
         Get the Window object for the Binding of Isaac.
 
@@ -47,52 +51,61 @@ class ScreenGrabber:
                     windows: list[Win32Window] = gw.getWindowsWithTitle(title)
                     return windows[0]
 
-        logger.warning("get_isaac_window: Failed to find Binding of Isaac Window! Are you running the game?")
+        logger.warning("_get_isaac_window: Failed to find Binding of Isaac Window! Are you running the game?")
         return None
 
-    def capture_window(self, window: Win32Window) -> np.ndarray:
+    def capture_window(self) -> np.ndarray:
         """
         Capture the specific window.
         To capture properly, the window must be in the foreground.
 
-        Args:
-            window (Win32Window): The window object to capture.
-
         Returns:
-            The captured screen area has an np array.
+            The captured screen area as an np array.
         """
-        with self._mss as sct:
-            monitor = {"top": window.top, "left": window.left, "width": window.width, "height": window.height}
+        with mss() as sct:
+            monitor = {
+                "top": self._isaac_window.top,
+                "left": self._isaac_window.left,
+                "width": self._isaac_window.width,
+                "height": self._isaac_window.height,
+            }
             frame = np.array(sct.grab(monitor))
-            color_corrected_image = cv2.cvtColor(frame, cv2.COLOR_BGRA2RGB)  # pylint: disable=no-member
+
+            # mss captures with the title bar and extra space on the sides in windowed mode
+            # let's crop those out.
+            title_bar_height = 50
+            border_width = 8
+            cropped_frame = frame[
+                title_bar_height:-border_width,  # crop the top and bottom
+                border_width:-border_width,  # crop left and right border
+            ]
+
+            # mss captures the image in BGR format, we need to convert it before we can plot it later.
+            color_corrected_image = cv2.cvtColor(cropped_frame, cv2.COLOR_BGRA2RGB)  # pylint: disable=no-member
             return color_corrected_image
 
-    def display_captured_window(self, frame: np.ndarray) -> None:
+    def display_captured_window(self, frame: np.ndarray | None = None) -> None:
         """
         Use matplotlib to show the captured frame.
 
         Args:
-            frame (np.ndarray): The frame as an np array.
+            frame (np.ndarray | None, optional): The frame as an np array.
+                If None, the frame will be captured in this method.
         """
-        plt.imshow(frame)
-        plt.axis("off")
-        plt.title("Captured Isaac Window")
-        plt.show()
+        try:
+            frame = frame if frame is not None else self.capture_window()
+            plt.imshow(frame)
+            plt.axis("off")
+            plt.title("Captured Isaac Window")
+            plt.show()
+        except RuntimeError as e:
+            logger.error("Failed to display captured window: %s", str(e))
 
 
 def main():
+    # before running, make sure your Isaac game window is running + in the foreground
     screen_grabber = ScreenGrabber()
-
-    # get the window object for the Isaac game
-    # make sure you have the game running and it's in the foreground.
-    window = screen_grabber.get_isaac_window()
-    print(window)
-    if window is None:
-        sys.exit(1)
-
-    # capture the Isaac window and visualize it
-    frame = screen_grabber.capture_window(window)
-    screen_grabber.display_captured_window(frame)
+    screen_grabber.display_captured_window()
 
 
 if __name__ == "__main__":
