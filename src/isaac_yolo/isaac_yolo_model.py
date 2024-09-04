@@ -9,6 +9,7 @@ from typing import Any, Iterable, cast
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+from PIL.Image import Image
 from ultralytics import YOLO  # type: ignore
 from ultralytics.engine.results import Boxes, Results  # type: ignore
 
@@ -90,12 +91,15 @@ class IsaacYoloModel:
         logger.info("Model loaded from path %s", path_to_weights)
         return model
 
-    def predict(self, image_paths: list[str], stream: bool = False) -> Iterable[Results]:
+    def predict(self, images: list[str] | list[Image] | list[np.ndarray], stream: bool = False) -> Iterable[Results]:
         """
         Perform object detection using the YOLO model on the images supplied by image_paths.
 
+        Note: before calling this, be sure your images have been resized to the target background size
+        of (1000, 625) because thta's what the model has been trained on.
+
         Args:
-            image_paths (str): List of paths to images to run inference on.
+            images (list[str] | list[Image] | list[np.ndarray]): List of image paths, image objects, or ndarray to run inference on.
                 To run inference on one image, pass a list with 1 element like: ['screenshots/img1.jpg'].
             stream (bool): When True, run the YOLO model in stream mode, which returns a generator of Result objects.
                 When False, return a list of Results instead, loaded into memory all at once.
@@ -103,13 +107,18 @@ class IsaacYoloModel:
         Returns:
             List[Results] when stream=False, otherwise Generator[Results] when Stream=True.
         """
-        results: Iterable[Results] = self._model.predict(image_paths, stream=stream)
+        results: Iterable[Results] = self._model.predict(images, stream=stream, imgsz=self._img_size)
         return results
 
     # pylint: disable=all
     def visulize_results(
-        self, results: Results | Iterable[Results], show: bool = True, save_path: str | None = None
-    ) -> None:
+        self,
+        results: Results | Iterable[Results],
+        show: bool = True,
+        save_path: str | None = None,
+        return_visualized_results: bool = False,
+        skip_unicorn_stump_and_coal: bool = True,
+    ) -> list[np.ndarray] | None:
         """
         Viusualize prediction results on the images.
 
@@ -117,9 +126,18 @@ class IsaacYoloModel:
             results (Results | Iterable[Results]): Results object or an Iterable of Results objects from the YOLO model prediction.
             show (bool): If True, display the image using matplotlib.
             save_path (str | None): If specified, save the image with bounding boxes to this path.
+            return_visualized_results (bool, optional): If True, return a list of images with the bounding boxes overlaid.
+            skip_unicorn_stump_and_coal (bool, optional): If True, ignore any detected objects for "Unicorn Stump" and "A Lump of Coal".
+                This is a fix for the model detecting base tears as unicorn stump.
+
+        Returns:
+            list[np.ndarray] if return_visualized_results=True, else None. The np.ndarrays are in cv2 format,
+                meaning they're in BGR. To plot via something like matplotlib, you'll need to run: cv2.cvtColor(my_array, cv2.COLOR_BGR2RGB)
         """
         if not isinstance(results, Iterable):
             results = [results]
+
+        visualized_results = []
 
         for result in results:
             copy_of_orig_img = cast(np.ndarray, result.orig_img).copy()
@@ -129,7 +147,21 @@ class IsaacYoloModel:
                 logger.info("No detection_results for image %s", result.path)
                 continue
 
+            valid_detection_found = (
+                False  # track if there are any valid detections, i.e. not lump of coal or unicorn stump.
+            )
+
             for det in detection_results:
+
+                # unfortunately the model seems to think default tears are unicorn stumps or lump of coal.
+                if skip_unicorn_stump_and_coal and (
+                    "unicorn stump" in det.name.lower() or "lump of coal" in det.name.lower()
+                ):
+                    continue
+
+                # we've found an item that's not lump of coal or unicorn stump! やった！
+                valid_detection_found = True
+
                 # draw the bounding box, modifies the image in place
                 cv2.rectangle(copy_of_orig_img, (int(det.x1), int(det.y1)), (int(det.x2), int(det.y2)), (0, 255, 0), 2)
 
@@ -162,6 +194,11 @@ class IsaacYoloModel:
                 cv2.imwrite(save_path, copy_of_orig_img)
                 logger.info("Image with detections saved to %s", save_path)
 
+            if return_visualized_results and valid_detection_found:
+                visualized_results.append(copy_of_orig_img)
+
+        return visualized_results if visualized_results else None
+
 
 def main():
     """Example usage of IsaacYoloModel."""
@@ -177,7 +214,7 @@ def main():
         Path(r"C:\Users\hamza\Downloads\devil_room_3.webp"),
     ]
 
-    results = isaac_yolo_model.predict(image_paths=image_paths)
+    results = isaac_yolo_model.predict(images=image_paths)
     isaac_yolo_model.visulize_results(results, show=True)
     print(f"{results = }")
 
