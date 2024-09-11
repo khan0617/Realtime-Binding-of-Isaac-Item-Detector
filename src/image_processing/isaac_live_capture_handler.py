@@ -1,3 +1,10 @@
+"""
+`isaac_live_capture_handler.py`
+
+Provides the IsaacLiveCaptureHandler class, which lets us capture the Isaac window
+and run inference on it, producing images with bounding boxes around detected items.
+"""
+
 import logging
 import time
 
@@ -45,7 +52,7 @@ class IsaacLiveCaptureHandler:
             frame = Image.fromarray(self._screen_grabber.capture_window())
             results = self._isaac_yolo_model.predict([frame], stream=False)
             visualized_results = self._isaac_yolo_model.visulize_results(
-                results=results, show=show, return_visualized_results=True, skip_unicorn_stump_and_coal=True
+                results=results, show=show, return_results=True, skip_unicorn_stump_and_coal=True
             )
             return visualized_results
 

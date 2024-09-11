@@ -22,6 +22,7 @@ maintainers = [
     {name = "Hamza Khan"}
 ]
 
+# to install everything run: pip install -e .
 dependencies = [
     "requests",
     "beautifulsoup4",
@@ -36,7 +37,9 @@ dependencies = [
     "ipykernel",
     "mss",
     "pywin32",
-    "pygetwindow"
+    "pygetwindow",
+    "flask",
+    "flask-socketio"
 ]
 
 [project.urls]

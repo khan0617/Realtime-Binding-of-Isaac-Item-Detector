@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Isaac Item Detection</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+</head>
+<body>
+    <h1>Binding of Isaac Item Detection</h1>
+    <div id="images-container"></div>
+
+    <script>
+        const socket = io.connect();
+
+        socket.on('inference_update', function (data) {
+            const imagesContainer = document.getElementById('images-container');
+            imagesContainer.innerHTML = '';  // Clear previous images
+
+            data.images.forEach((imgBase64) => {
+                const imgElement = document.createElement('img');
+                imgElement.src = 'data:image/png;base64,' + imgBase64;
+                imagesContainer.appendChild(imgElement);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -116,7 +116,7 @@ class IsaacYoloModel:
         results: Results | Iterable[Results],
         show: bool = True,
         save_path: str | None = None,
-        return_visualized_results: bool = False,
+        return_results: bool = False,
         skip_unicorn_stump_and_coal: bool = True,
     ) -> list[np.ndarray] | None:
         """
@@ -126,18 +126,18 @@ class IsaacYoloModel:
             results (Results | Iterable[Results]): Results object or an Iterable of Results objects from the YOLO model prediction.
             show (bool): If True, display the image using matplotlib.
             save_path (str | None): If specified, save the image with bounding boxes to this path.
-            return_visualized_results (bool, optional): If True, return a list of images with the bounding boxes overlaid.
+            return_results (bool, optional): If True, return a list of images with the bounding boxes overlaid, along with their class IDs.
             skip_unicorn_stump_and_coal (bool, optional): If True, ignore any detected objects for "Unicorn Stump" and "A Lump of Coal".
                 This is a fix for the model detecting base tears as unicorn stump.
 
         Returns:
-            list[np.ndarray] if return_visualized_results=True, else None. The np.ndarrays are in cv2 format,
+            list[tuple[str, np.ndarray]] if return_visualized_results=True, else None. The np.ndarrays are in cv2 format,
                 meaning they're in BGR. To plot via something like matplotlib, you'll need to run: cv2.cvtColor(my_array, cv2.COLOR_BGR2RGB)
         """
         if not isinstance(results, Iterable):
             results = [results]
 
-        visualized_results = []
+        final_results: list[tuple[list[str], np.ndarray]] = []
 
         for result in results:
             copy_of_orig_img = cast(np.ndarray, result.orig_img).copy()
@@ -152,7 +152,6 @@ class IsaacYoloModel:
             )
 
             for det in detection_results:
-
                 # unfortunately the model seems to think default tears are unicorn stumps or lump of coal.
                 if skip_unicorn_stump_and_coal and (
                     "unicorn stump" in det.name.lower() or "lump of coal" in det.name.lower()
@@ -194,10 +193,10 @@ class IsaacYoloModel:
                 cv2.imwrite(save_path, copy_of_orig_img)
                 logger.info("Image with detections saved to %s", save_path)
 
-            if return_visualized_results and valid_detection_found:
-                visualized_results.append(copy_of_orig_img)
+            if return_results and valid_detection_found:
+                final_results.append(copy_of_orig_img)
 
-        return visualized_results if visualized_results else None
+        return final_results if final_results else None
 
 
 def main():
