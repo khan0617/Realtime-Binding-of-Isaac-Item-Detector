@@ -1,0 +1,188 @@
+/* styles.css */
+
+/* a stylized font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+/* dark mode styling */
+body {
+    margin: 0;
+    font-family: 'Montserrat', sans-serif;
+    background-color: #121212;
+    color: #FFFFFF;
+}
+
+#main-container {
+    display: flex;
+    height: 100vh;
+}
+
+#video-container {
+    flex: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+#images-container img {
+    max-width: 100%;
+    height: auto;
+}
+
+#items-container {
+    flex: 1;
+    background-color: #1E1E1E;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+#items-container h2 {
+    text-align: center;
+    font-size: 1.8em;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin-bottom: 20px;
+}
+
+#item-list .item {
+    position: relative;
+    border-bottom: 1px solid #333333;
+    padding: 20px 0;
+    text-align: center;
+}
+
+#item-list .item img {
+    width: 100px;
+    height: 100px;
+    display: block;
+    margin: 0 auto 15px auto;
+}
+
+#item-list .item a {
+    display: block;
+    font-size: 1.4em;
+    font-weight: 600;
+    color: #BB86FC;
+    text-decoration: underline; /* underline hyperlinks */
+    margin-bottom: 10px;
+}
+
+#item-list .item a:hover {
+    text-decoration: underline; /* keep underline on hover */
+    color: #D0AFFF; /* lighter accent on hover */
+}
+
+#item-list .item p {
+    margin: 10px 0;
+    font-size: 1em;
+    color: #E0E0E0;
+}
+
+#item-list .item p.confidence {
+    font-size: 0.9em;
+    color: #888888;
+}
+
+#item-list .item:last-child {
+    border-bottom: none;
+}
+
+#item-list .item:hover {
+    background-color: #2A2A2A;
+}
+
+#items-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+#items-container::-webkit-scrollbar-thumb {
+    background-color: #555;
+    border-radius: 4px;
+}
+
+#items-container::-webkit-scrollbar-track {
+    background-color: #1E1E1E;
+}
+
+/* style for the close button */
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: transparent;
+    border: none;
+    color: #888888;
+    font-size: 30px;
+    cursor: pointer;
+}
+
+.close-button:hover {
+    color: #FFFFFF;
+}
+
+#header {
+    background-color: #1E1E1E;
+    padding: 20px;
+}
+
+#header h1 {
+    color: #FFFFFF;
+    font-size: 2em;
+    margin: 0;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* center the controls within the header */
+#controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* style each control item */
+#controls .control-item {
+    display: flex;
+    align-items: center;
+    margin: 10px 20px;
+}
+
+/* style control labels the labels */
+#controls label {
+    color: #FFFFFF;
+    margin-right: 10px;
+    font-size: 1em;
+}
+
+/* style control inputs */
+#controls input[type="number"],
+#controls input[type="color"] {
+    padding: 5px;
+    border: none;
+    border-radius: 4px;
+    background-color: #2A2A2A;
+    color: #FFFFFF;
+}
+
+#controls input[type="number"] {
+    width: 80px;
+}
+
+#controls input[type="color"] {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+}
+
+#controls input[type="number"]:focus,
+#controls input[type="color"]:focus {
+    outline: none;
+    box-shadow: 0 0 5px #BB86FC;
+}
+
+#controls input[type="number"]::-webkit-inner-spin-button,
+#controls input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}

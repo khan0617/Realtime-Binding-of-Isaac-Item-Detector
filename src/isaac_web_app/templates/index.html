@@ -2,27 +2,45 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Isaac Item Detection</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='isaac_favicon.ico') }}">
 </head>
 <body>
-    <h1>Binding of Isaac Item Detection</h1>
-    <div id="images-container"></div>
+    <div id="header">
+        <h1>Binding Of Isaac Item Detector</h1>
+        <div id="controls">
+            <div class="control-item">
+                <label for="confidence-threshold">Confidence Threshold (0 - 1.0):</label>
+                <input type="number" id="confidence-threshold" min="0" max="1.0" step="0.01" value="{{ visualization_settings.confidence_threshold }}">
+            </div>
 
-    <script>
-        const socket = io.connect();
+            <div class="control-item">
+                <label for="bbox-color">Bounding Box Color:</label>
+                <input type="color" id="bbox-color" value="{{ visualization_settings.bbox_color }}">
+            </div>
 
-        socket.on('inference_update', function (data) {
-            const imagesContainer = document.getElementById('images-container');
-            imagesContainer.innerHTML = '';  // Clear previous images
+            <div class="control-item">
+                <label for="bbox-label-color">Label Color:</label>
+                <input type="color" id="bbox-label-color" value="{{ visualization_settings.bbox_text_color }}">
+            </div>
+        </div>
+    </div>
 
-            data.images.forEach((imgBase64) => {
-                const imgElement = document.createElement('img');
-                imgElement.src = 'data:image/png;base64,' + imgBase64;
-                imagesContainer.appendChild(imgElement);
-            });
-        });
-    </script>
+    <div id="main-container">
+        <!-- left side: video stream -->
+        <div id="video-container">
+            <div id="images-container"></div>
+        </div>
+        <!-- right side: detected items list -->
+        <div id="items-container">
+            <h2>Recently Detected Items</h2>
+            <div id="item-list"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
