@@ -55,7 +55,9 @@
 <li class="toctree-l1"><a class="reference internal" href="setup_everything.html">setup_everything module</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">utils module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#utils.get_id_name_mapping"><code class="docutils literal notranslate"><span class="pre">get_id_name_mapping()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#utils.get_isaac_item_from_yolo_class_id"><code class="docutils literal notranslate"><span class="pre">get_isaac_item_from_yolo_class_id()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#utils.get_yolo_class_id_from_item_id_tail"><code class="docutils literal notranslate"><span class="pre">get_yolo_class_id_from_item_id_tail()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#utils.hex_to_bgr"><code class="docutils literal notranslate"><span class="pre">hex_to_bgr()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#utils.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#utils.read_yolo_label_file"><code class="docutils literal notranslate"><span class="pre">read_yolo_label_file()</span></code></a></li>
 </ul>
@@ -107,6 +109,28 @@ Ex. {0: ‘person’, 1: ‘car’} could correspond to this in yaml:</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="utils.get_isaac_item_from_yolo_class_id">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">get_isaac_item_from_yolo_class_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">yolo_class_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#get_isaac_item_from_yolo_class_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.get_isaac_item_from_yolo_class_id" title="Link to this definition"></a></dt>
+<dd><p>Get the IsaacItem object corresponding to this yolo_class_id.</p>
+<p>Example: The “Forget Me Now” item has item_id=”5.100.127” and yolo_class_id=”24”.
+get_isaac_item_from__item_id_tail(“24”) will return IsaacItem(name=”Forget Me Now”, item_id=”5.100.127”, …)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>yolo_class_id</strong> (<em>str</em>) – The yolo class id for an IsaacItem.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="scraping.html#scraping.isaac_item.IsaacItem" title="scraping.isaac_item.IsaacItem"><code class="xref py py-class docutils literal notranslate"><span class="pre">IsaacItem</span></code></a></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>IsaacItem populated with the appropriate information.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If no object with the yolo_class_id is found in the json data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="utils.get_yolo_class_id_from_item_id_tail">
 <span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">get_yolo_class_id_from_item_id_tail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item_id_tail</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#get_yolo_class_id_from_item_id_tail"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.get_yolo_class_id_from_item_id_tail" title="Link to this definition"></a></dt>
 <dd><p>Convert the IsaacItem id tail to its yolo class id.</p>
@@ -120,8 +144,28 @@ So get_yolo_class_id_from_isaac_id_tail(“1”) returns “419”.</p>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The yolo_class_id which represents this IsaacItem.
-Raise ValueError on failure.</p>
+<dd class="field-odd"><p>The yolo_class_id which represents this IsaacItem.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError on failure</strong><strong>, </strong><strong>meaning no json object with item_id_tail exists.</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.hex_to_bgr">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">hex_to_bgr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hex_color</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#hex_to_bgr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.hex_to_bgr" title="Link to this definition"></a></dt>
+<dd><p>Convers a hex color string to a BGR tuple for OpenCV.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>hex_color</strong> (<em>str</em>) – Hex color string (ex: “#FF0000”)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>BGR tuple (ex: (0, 0, 255)).
+Tuple values will be in range [0, 255]</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[int, int, int]</p>
 </dd>
 </dl>
 </dd></dl>

@@ -36,6 +36,22 @@ image\_processing.image\_overlay\_processor module
    :undoc-members:
    :show-inheritance:
 
+image\_processing.isaac\_live\_capture\_handler module
+------------------------------------------------------
+
+.. automodule:: image_processing.isaac_live_capture_handler
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+image\_processing.screen\_grabber module
+----------------------------------------
+
+.. automodule:: image_processing.screen_grabber
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 

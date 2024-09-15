@@ -43,15 +43,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="constants.html">constants module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="generate_augmented_items.html">generate_augmented_items module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="image_processing.html">image_processing package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="isaac_web_app.html">isaac_web_app package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="isaac_yolo.html">isaac_yolo package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="logging_config.html">logging_config module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="scraping.html">scraping package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="setup_everything.html">setup_everything module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="utils.html">utils module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">src</a></li>
 </ul>
 
         </div>
@@ -128,10 +120,20 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="image_processing.html#image_processing.screen_grabber.ScreenGrabber.capture_window">capture_window() (image_processing.screen_grabber.ScreenGrabber method)</a>
+</li>
+      <li><a href="isaac_yolo.html#isaac_yolo.isaac_yolo_model.DetectionResult.class_id">class_id (isaac_yolo.isaac_yolo_model.DetectionResult attribute)</a>
+</li>
       <li><a href="image_processing.html#image_processing.bbox.CocoBbox">CocoBbox (class in image_processing.bbox)</a>
 </li>
       <li><a href="image_processing.html#image_processing.augmentation.Augmentation.COLOR_JITTER">COLOR_JITTER (image_processing.augmentation.Augmentation attribute)</a>
 </li>
+      <li><a href="isaac_yolo.html#isaac_yolo.isaac_yolo_model.DetectionResult.confidence">confidence (isaac_yolo.isaac_yolo_model.DetectionResult attribute)</a>
+</li>
+      <li><a href="isaac_yolo.html#isaac_yolo.isaac_yolo_model.IsaacYoloModel.confidence_threshold">confidence_threshold (isaac_yolo.isaac_yolo_model.IsaacYoloModel property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="logging_config.html#logging_config.configure_logging">configure_logging() (in module logging_config)</a>
 </li>
       <li>
@@ -141,8 +143,6 @@
         <li><a href="constants.html#module-constants">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="image_processing.html#image_processing.augmentation.Augmentation.CONTRAST">CONTRAST (image_processing.augmentation.Augmentation attribute)</a>
 </li>
       <li><a href="isaac_yolo.html#isaac_yolo.isaac_yolo_dataset_generator.copy_files_to_yolo_dataset">copy_files_to_yolo_dataset() (in module isaac_yolo.isaac_yolo_dataset_generator)</a>
@@ -159,8 +159,12 @@
 </li>
       <li><a href="scraping.html#scraping.isaac_item.IsaacItem.description">description (scraping.isaac_item.IsaacItem attribute)</a>
 </li>
+      <li><a href="isaac_yolo.html#isaac_yolo.isaac_yolo_model.DetectionResult">DetectionResult (class in isaac_yolo.isaac_yolo_model)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="image_processing.html#image_processing.screen_grabber.ScreenGrabber.display_captured_window">display_captured_window() (image_processing.screen_grabber.ScreenGrabber method)</a>
+</li>
       <li><a href="scraping.html#scraping.scraper.download_item_images">download_item_images() (in module scraping.scraper)</a>
 </li>
       <li><a href="scraping.html#scraping.scraper.dump_item_data_to_json">dump_item_data_to_json() (in module scraping.scraper)</a>
@@ -175,8 +179,12 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="scraping.html#scraping.isaac_item.IsaacItem.from_dict">from_dict() (scraping.isaac_item.IsaacItem class method)</a>
+      <li><a href="isaac_yolo.html#isaac_yolo.isaac_yolo_model.DetectionResult.from_dict">from_dict() (isaac_yolo.isaac_yolo_model.DetectionResult class method)</a>
+
+      <ul>
+        <li><a href="scraping.html#scraping.isaac_item.IsaacItem.from_dict">(scraping.isaac_item.IsaacItem class method)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -194,13 +202,15 @@
 </li>
       <li><a href="scraping.html#scraping.scraper.get_encoded_name_from_url">get_encoded_name_from_url() (in module scraping.scraper)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="utils.html#utils.get_id_name_mapping">get_id_name_mapping() (in module utils)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="scraping.html#scraping.isaac_item.IsaacItem.get_image_id_tail">get_image_id_tail() (scraping.isaac_item.IsaacItem method)</a>
 </li>
       <li><a href="isaac_yolo.html#isaac_yolo.isaac_yolo_dataset_generator.get_image_label_file_pairs">get_image_label_file_pairs() (in module isaac_yolo.isaac_yolo_dataset_generator)</a>
+</li>
+      <li><a href="utils.html#utils.get_isaac_item_from_yolo_class_id">get_isaac_item_from_yolo_class_id() (in module utils)</a>
 </li>
       <li><a href="scraping.html#scraping.scraper.get_isaac_items_from_json">get_isaac_items_from_json() (in module scraping.scraper)</a>
 </li>
@@ -214,9 +224,11 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="image_processing.html#image_processing.bbox.CocoBbox.h">h (image_processing.bbox.CocoBbox attribute)</a>
 </li>
+      <li><a href="image_processing.html#image_processing.bbox.YoloBbox.height">height (image_processing.bbox.YoloBbox attribute)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="image_processing.html#image_processing.bbox.YoloBbox.height">height (image_processing.bbox.YoloBbox attribute)</a>
+      <li><a href="utils.html#utils.hex_to_bgr">hex_to_bgr() (in module utils)</a>
 </li>
       <li><a href="image_processing.html#image_processing.augmentation.Augmentation.HORIZONTAL_MIRROR">HORIZONTAL_MIRROR (image_processing.augmentation.Augmentation attribute)</a>
 </li>
@@ -263,6 +275,20 @@
         <li><a href="image_processing.html#module-image_processing.image_overlay_processor">module</a>
 </li>
       </ul></li>
+      <li>
+    image_processing.isaac_live_capture_handler
+
+      <ul>
+        <li><a href="image_processing.html#module-image_processing.isaac_live_capture_handler">module</a>
+</li>
+      </ul></li>
+      <li>
+    image_processing.screen_grabber
+
+      <ul>
+        <li><a href="image_processing.html#module-image_processing.screen_grabber">module</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="isaac_yolo.html#isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair">ImageLabelPair (class in isaac_yolo.isaac_yolo_dataset_generator)</a>
@@ -292,7 +318,18 @@
         <li><a href="isaac_yolo.html#module-isaac_yolo.isaac_yolo_dataset_generator">module</a>
 </li>
       </ul></li>
+      <li>
+    isaac_yolo.isaac_yolo_model
+
+      <ul>
+        <li><a href="isaac_yolo.html#module-isaac_yolo.isaac_yolo_model">module</a>
+</li>
+      </ul></li>
       <li><a href="scraping.html#scraping.isaac_item.IsaacItem">IsaacItem (class in scraping.isaac_item)</a>
+</li>
+      <li><a href="image_processing.html#image_processing.isaac_live_capture_handler.IsaacLiveCaptureHandler">IsaacLiveCaptureHandler (class in image_processing.isaac_live_capture_handler)</a>
+</li>
+      <li><a href="isaac_yolo.html#isaac_yolo.isaac_yolo_model.IsaacYoloModel">IsaacYoloModel (class in isaac_yolo.isaac_yolo_model)</a>
 </li>
       <li><a href="scraping.html#scraping.isaac_item.IsaacItem.item_id">item_id (scraping.isaac_item.IsaacItem attribute)</a>
 </li>
@@ -328,7 +365,13 @@
 </li>
         <li><a href="image_processing.html#image_processing.image_overlay_processor.main">(in module image_processing.image_overlay_processor)</a>
 </li>
+        <li><a href="image_processing.html#image_processing.isaac_live_capture_handler.main">(in module image_processing.isaac_live_capture_handler)</a>
+</li>
+        <li><a href="image_processing.html#image_processing.screen_grabber.main">(in module image_processing.screen_grabber)</a>
+</li>
         <li><a href="isaac_yolo.html#isaac_yolo.isaac_yolo_dataset_generator.main">(in module isaac_yolo.isaac_yolo_dataset_generator)</a>
+</li>
+        <li><a href="isaac_yolo.html#isaac_yolo.isaac_yolo_model.main">(in module isaac_yolo.isaac_yolo_model)</a>
 </li>
         <li><a href="scraping.html#scraping.scraper.main">(in module scraping.scraper)</a>
 </li>
@@ -355,11 +398,17 @@
 </li>
         <li><a href="image_processing.html#module-image_processing.image_overlay_processor">image_processing.image_overlay_processor</a>
 </li>
+        <li><a href="image_processing.html#module-image_processing.isaac_live_capture_handler">image_processing.isaac_live_capture_handler</a>
+</li>
+        <li><a href="image_processing.html#module-image_processing.screen_grabber">image_processing.screen_grabber</a>
+</li>
         <li><a href="isaac_web_app.html#module-isaac_web_app">isaac_web_app</a>
 </li>
         <li><a href="isaac_yolo.html#module-isaac_yolo">isaac_yolo</a>
 </li>
         <li><a href="isaac_yolo.html#module-isaac_yolo.isaac_yolo_dataset_generator">isaac_yolo.isaac_yolo_dataset_generator</a>
+</li>
+        <li><a href="isaac_yolo.html#module-isaac_yolo.isaac_yolo_model">isaac_yolo.isaac_yolo_model</a>
 </li>
         <li><a href="logging_config.html#module-logging_config">logging_config</a>
 </li>
@@ -380,8 +429,12 @@
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="scraping.html#scraping.isaac_item.IsaacItem.name">name (scraping.isaac_item.IsaacItem attribute)</a>
+      <li><a href="isaac_yolo.html#isaac_yolo.isaac_yolo_model.DetectionResult.name">name (isaac_yolo.isaac_yolo_model.DetectionResult attribute)</a>
+
+      <ul>
+        <li><a href="scraping.html#scraping.isaac_item.IsaacItem.name">(scraping.isaac_item.IsaacItem attribute)</a>
 </li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="image_processing.html#image_processing.augmentation.Augmentation.NOISE">NOISE (image_processing.augmentation.Augmentation attribute)</a>
@@ -410,6 +463,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="image_processing.html#image_processing.image_overlay_processor.ImageOverlayProcessor.plot_random_overlays_with_bboxes">plot_random_overlays_with_bboxes() (image_processing.image_overlay_processor.ImageOverlayProcessor method)</a>
 </li>
+      <li><a href="isaac_yolo.html#isaac_yolo.isaac_yolo_model.IsaacYoloModel.predict">predict() (isaac_yolo.isaac_yolo_model.IsaacYoloModel method)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -426,11 +481,15 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="utils.html#utils.read_yolo_label_file">read_yolo_label_file() (in module utils)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="image_processing.html#image_processing.image_overlay_processor.ImageOverlayProcessor.resize_all_backgrounds">resize_all_backgrounds() (image_processing.image_overlay_processor.ImageOverlayProcessor method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="image_processing.html#image_processing.image_overlay_processor.ImageOverlayProcessor.resize_and_pad_image">resize_and_pad_image() (image_processing.image_overlay_processor.ImageOverlayProcessor static method)</a>
+</li>
       <li><a href="image_processing.html#image_processing.augmentation.Augmentation.ROTATE">ROTATE (image_processing.augmentation.Augmentation attribute)</a>
+</li>
+      <li><a href="image_processing.html#image_processing.isaac_live_capture_handler.IsaacLiveCaptureHandler.run_capture_and_inference">run_capture_and_inference() (image_processing.isaac_live_capture_handler.IsaacLiveCaptureHandler method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -463,6 +522,8 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="image_processing.html#image_processing.screen_grabber.ScreenGrabber">ScreenGrabber (class in image_processing.screen_grabber)</a>
+</li>
       <li>
     setup_everything
 
@@ -523,6 +584,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="image_processing.html#image_processing.image_overlay_processor.ImageOverlayProcessor.visualize_bbox_area">visualize_bbox_area() (image_processing.image_overlay_processor.ImageOverlayProcessor method)</a>
 </li>
+      <li><a href="isaac_yolo.html#isaac_yolo.isaac_yolo_model.IsaacYoloModel.visualize_results">visualize_results() (isaac_yolo.isaac_yolo_model.IsaacYoloModel method)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -545,8 +608,12 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="image_processing.html#image_processing.bbox.CocoBbox.x">x (image_processing.bbox.CocoBbox attribute)</a>
 </li>
+      <li><a href="isaac_yolo.html#isaac_yolo.isaac_yolo_model.DetectionResult.x1">x1 (isaac_yolo.isaac_yolo_model.DetectionResult attribute)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="isaac_yolo.html#isaac_yolo.isaac_yolo_model.DetectionResult.x2">x2 (isaac_yolo.isaac_yolo_model.DetectionResult attribute)</a>
+</li>
       <li><a href="image_processing.html#image_processing.bbox.YoloBbox.x_center">x_center (image_processing.bbox.YoloBbox attribute)</a>
 </li>
   </ul></td>
@@ -557,10 +624,14 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="image_processing.html#image_processing.bbox.CocoBbox.y">y (image_processing.bbox.CocoBbox attribute)</a>
 </li>
-      <li><a href="image_processing.html#image_processing.bbox.YoloBbox.y_center">y_center (image_processing.bbox.YoloBbox attribute)</a>
+      <li><a href="isaac_yolo.html#isaac_yolo.isaac_yolo_model.DetectionResult.y1">y1 (isaac_yolo.isaac_yolo_model.DetectionResult attribute)</a>
+</li>
+      <li><a href="isaac_yolo.html#isaac_yolo.isaac_yolo_model.DetectionResult.y2">y2 (isaac_yolo.isaac_yolo_model.DetectionResult attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="image_processing.html#image_processing.bbox.YoloBbox.y_center">y_center (image_processing.bbox.YoloBbox attribute)</a>
+</li>
       <li><a href="scraping.html#scraping.isaac_item.IsaacItem.yolo_class_id">yolo_class_id (scraping.isaac_item.IsaacItem attribute)</a>
 </li>
       <li><a href="image_processing.html#image_processing.bbox.YoloBbox">YoloBbox (class in image_processing.bbox)</a>

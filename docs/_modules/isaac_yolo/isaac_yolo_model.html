@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>isaac_yolo.isaac_yolo_model &mdash; Realtime-Binding-Of-Isaac-Item-Detector 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=8d563738"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Realtime-Binding-Of-Isaac-Item-Detector
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">src</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Realtime-Binding-Of-Isaac-Item-Detector</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">isaac_yolo.isaac_yolo_model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for isaac_yolo.isaac_yolo_model</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span> <span class="nn">cv2</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">PIL.Image</span> <span class="kn">import</span> <span class="n">Image</span>
+<span class="kn">from</span> <span class="nn">ultralytics</span> <span class="kn">import</span> <span class="n">YOLO</span>  <span class="c1"># type: ignore</span>
+<span class="kn">from</span> <span class="nn">ultralytics.engine.results</span> <span class="kn">import</span> <span class="n">Boxes</span><span class="p">,</span> <span class="n">Results</span>  <span class="c1"># type: ignore</span>
+
+<span class="kn">from</span> <span class="nn">constants</span> <span class="kn">import</span> <span class="n">BBOX_COLOR</span><span class="p">,</span> <span class="n">BBOX_TEXT_COLOR</span><span class="p">,</span> <span class="n">CONF_THRESHOLD</span><span class="p">,</span> <span class="n">MODEL_WEIGHTS_100_EPOCHS_PATH</span><span class="p">,</span> <span class="n">TARGET_BACKGROUND_SIZE</span>
+<span class="kn">from</span> <span class="nn">logging_config</span> <span class="kn">import</span> <span class="n">configure_logging</span>
+<span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="n">hex_to_bgr</span>
+
+<span class="n">configure_logging</span><span class="p">()</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="DetectionResult">
+<a class="viewcode-back" href="../../isaac_yolo.html#isaac_yolo.isaac_yolo_model.DetectionResult">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DetectionResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents a single detection result from a YOLO model.</span>
+
+<span class="sd">    Use this class to represent the dicts returned by `result.summary()`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">class_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">x1</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">y1</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">x2</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">y2</span><span class="p">:</span> <span class="nb">float</span>
+
+<div class="viewcode-block" id="DetectionResult.from_dict">
+<a class="viewcode-back" href="../../isaac_yolo.html#isaac_yolo.isaac_yolo_model.DetectionResult.from_dict">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">DetectionResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a DetectionResult object from a dictionary.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            d (dict): A dictionary with keys &#39;name&#39;, &#39;class&#39;, &#39;confidence&#39;, and &#39;box&#39;.</span>
+<span class="sd">                                   Example:</span>
+<span class="sd">                                   {&#39;box&#39;: {&#39;x1&#39;: 404.6, &#39;x2&#39;: 481.8, &#39;y1&#39;: 334.9, &#39;y2&#39;: 412.1},</span>
+<span class="sd">                                    &#39;class&#39;: 317,</span>
+<span class="sd">                                    &#39;confidence&#39;: 0.88475,</span>
+<span class="sd">                                    &#39;name&#39;: &quot;Mom&#39;s Coin Purse&quot;}</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            DetectionResult: An instance of DetectionResult populated with the data from the dictionary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">],</span>
+            <span class="n">class_id</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;class&quot;</span><span class="p">],</span>
+            <span class="n">confidence</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;confidence&quot;</span><span class="p">],</span>
+            <span class="n">x1</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;box&quot;</span><span class="p">][</span><span class="s2">&quot;x1&quot;</span><span class="p">],</span>
+            <span class="n">y1</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;box&quot;</span><span class="p">][</span><span class="s2">&quot;y1&quot;</span><span class="p">],</span>
+            <span class="n">x2</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;box&quot;</span><span class="p">][</span><span class="s2">&quot;x2&quot;</span><span class="p">],</span>
+            <span class="n">y2</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;box&quot;</span><span class="p">][</span><span class="s2">&quot;y2&quot;</span><span class="p">],</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="IsaacYoloModel">
+<a class="viewcode-back" href="../../isaac_yolo.html#isaac_yolo.isaac_yolo_model.IsaacYoloModel">[docs]</a>
+<span class="k">class</span> <span class="nc">IsaacYoloModel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;IsaacYoloModel is responsible for making bounding-box predictions on images or video of the game.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">path_to_weights</span><span class="p">,</span> <span class="n">img_size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">confidence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">CONF_THRESHOLD</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the IsaacYoloModel.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            path_to_weights (str): Path to the trained YOLO model weights.</span>
+<span class="sd">            img_size (tuple[int, int]): Image size</span>
+<span class="sd">            confidence_threshold (float): The minimum confidence to consider an image as &quot;detected&quot; and plottable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_img_size</span> <span class="o">=</span> <span class="n">img_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_confidence_threshold</span> <span class="o">=</span> <span class="n">confidence_threshold</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_model</span><span class="p">(</span><span class="n">path_to_weights</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">confidence_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_confidence_threshold</span>
+
+    <span class="nd">@confidence_threshold</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">confidence_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conf_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_confidence_threshold</span> <span class="o">=</span> <span class="n">conf_threshold</span>
+
+    <span class="k">def</span> <span class="nf">_load_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path_to_weights</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;detect&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">YOLO</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load a YOLO model for the specified task.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            path_to_weights (str): Where the model weights are stored, ex: &#39;model_weights/isaac_model.pt&#39;</span>
+<span class="sd">            task (str):</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">YOLO</span><span class="p">(</span><span class="n">path_to_weights</span><span class="p">,</span> <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Model loaded from path </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">path_to_weights</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">model</span>
+
+<div class="viewcode-block" id="IsaacYoloModel.predict">
+<a class="viewcode-back" href="../../isaac_yolo.html#isaac_yolo.isaac_yolo_model.IsaacYoloModel.predict">[docs]</a>
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">images</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Image</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Results</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform object detection using the YOLO model on the images supplied by image_paths.</span>
+
+<span class="sd">        Note: before calling this, be sure your images have been resized to the target background size</span>
+<span class="sd">        of (1000, 625) because thta&#39;s what the model has been trained on.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            images (list[str] | list[Image] | list[np.ndarray]): List of image paths, image objects, or ndarray to run inference on.</span>
+<span class="sd">                To run inference on one image, pass a list with 1 element like: [&#39;screenshots/img1.jpg&#39;].</span>
+<span class="sd">            stream (bool): When True, run the YOLO model in stream mode, which returns a generator of Result objects.</span>
+<span class="sd">                When False, return a list of Results instead, loaded into memory all at once.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[Results] when stream=False, otherwise Generator[Results] when Stream=True.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">results</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Results</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="n">stream</span><span class="p">,</span> <span class="n">imgsz</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_img_size</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">results</span></div>
+
+
+    <span class="c1"># pylint: disable=all</span>
+<div class="viewcode-block" id="IsaacYoloModel.visualize_results">
+<a class="viewcode-back" href="../../isaac_yolo.html#isaac_yolo.isaac_yolo_model.IsaacYoloModel.visualize_results">[docs]</a>
+    <span class="k">def</span> <span class="nf">visualize_results</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">results</span><span class="p">:</span> <span class="n">Results</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Results</span><span class="p">],</span>
+        <span class="n">show</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">save_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">return_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">skip_unicorn_stump_and_coal</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">bbox_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bbox_text_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">DetectionResult</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Viusualize prediction results on the images.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            results (Results | Iterable[Results]): Results object or an Iterable of Results objects from the YOLO model prediction.</span>
+<span class="sd">            show (bool): If True, display the image using matplotlib.</span>
+<span class="sd">            save_path (str | None): If specified, save the image with bounding boxes to this path.</span>
+<span class="sd">            return_results (bool, optional): If True, return a list of tuples of images with the bounding boxes overlaid with associated DetectionResults.</span>
+<span class="sd">            skip_unicorn_stump_and_coal (bool, optional): If True, ignore any detected objects for &quot;Unicorn Stump&quot; and &quot;A Lump of Coal&quot;.</span>
+<span class="sd">                This is a fix for the model detecting base tears as unicorn stump.</span>
+<span class="sd">            bbox_color (str, optional): Color of any drawn bounding boxes. Default is green. Ex: &quot;#00FF00&quot;.</span>
+<span class="sd">            bbox_text_color (str, optional): Color of the text drawn on the bounding boxes. Default is black. Ex: &quot;#000000&quot;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list[tuple[list[DetectionResult], np.ndarray]] if return_results=True, else None. The np.ndarrays are in cv2 format,</span>
+<span class="sd">                meaning they&#39;re in BGR. To plot via something like matplotlib, you may need to run: cv2.cvtColor(my_array, cv2.COLOR_BGR2RGB).</span>
+<span class="sd">                The list[DetectionResult] will correspond to all of the detected items on the corresponding np.ndarray image.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">bbox_color_tuple</span> <span class="o">=</span> <span class="n">hex_to_bgr</span><span class="p">(</span><span class="n">bbox_color</span><span class="p">)</span> <span class="k">if</span> <span class="n">bbox_color</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">hex_to_bgr</span><span class="p">(</span><span class="n">BBOX_COLOR</span><span class="p">)</span>
+        <span class="n">bbox_text_color_tuple</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">hex_to_bgr</span><span class="p">(</span><span class="n">bbox_text_color</span><span class="p">)</span> <span class="k">if</span> <span class="n">bbox_text_color</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">hex_to_bgr</span><span class="p">(</span><span class="n">BBOX_TEXT_COLOR</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">results</span><span class="p">]</span>
+
+        <span class="n">final_results</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+            <span class="n">copy_of_orig_img</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">orig_img</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">detection_results</span> <span class="o">=</span> <span class="p">[</span><span class="n">DetectionResult</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">summary</span><span class="p">()]</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">detection_results</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No detection_results for image </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="n">valid_detection_found</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="kc">False</span>  <span class="c1"># track if there are any valid detections, i.e. not lump of coal or unicorn stump.</span>
+            <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">det</span> <span class="ow">in</span> <span class="n">detection_results</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">det</span><span class="o">.</span><span class="n">confidence</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_confidence_threshold</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+                <span class="c1"># unfortunately the model seems to think default tears are unicorn stumps or lump of coal.</span>
+                <span class="k">if</span> <span class="n">skip_unicorn_stump_and_coal</span> <span class="ow">and</span> <span class="p">(</span>
+                    <span class="s2">&quot;unicorn stump&quot;</span> <span class="ow">in</span> <span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">&quot;lump of coal&quot;</span> <span class="ow">in</span> <span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                <span class="p">):</span>
+                    <span class="k">continue</span>
+
+                <span class="c1"># we&#39;ve found an item that&#39;s not lump of coal or unicorn stump! やった！</span>
+                <span class="n">valid_detection_found</span> <span class="o">=</span> <span class="kc">True</span>
+
+                <span class="c1"># draw the bounding box, modifies the image in place</span>
+                <span class="n">cv2</span><span class="o">.</span><span class="n">rectangle</span><span class="p">(</span>
+                    <span class="n">copy_of_orig_img</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">x1</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">y1</span><span class="p">)),</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">x2</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">y2</span><span class="p">)),</span> <span class="n">bbox_color_tuple</span><span class="p">,</span> <span class="mi">2</span>
+                <span class="p">)</span>
+
+                <span class="c1"># prepare the label</span>
+                <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">det</span><span class="o">.</span><span class="n">confidence</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="n">label_size</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">getTextSize</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">FONT_HERSHEY_SIMPLEX</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">label_y</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">y1</span><span class="p">),</span> <span class="n">label_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">10</span><span class="p">)</span>
+
+                <span class="c1"># draw a rectangle behind the label</span>
+                <span class="n">cv2</span><span class="o">.</span><span class="n">rectangle</span><span class="p">(</span>
+                    <span class="n">copy_of_orig_img</span><span class="p">,</span>
+                    <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">x1</span><span class="p">),</span> <span class="n">label_y</span> <span class="o">-</span> <span class="n">label_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">10</span><span class="p">),</span>
+                    <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">x1</span><span class="p">)</span> <span class="o">+</span> <span class="n">label_size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">label_y</span> <span class="o">+</span> <span class="mi">5</span><span class="p">),</span>
+                    <span class="n">bbox_color_tuple</span><span class="p">,</span>
+                    <span class="n">cv2</span><span class="o">.</span><span class="n">FILLED</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="c1"># put the label text on the image</span>
+                <span class="n">cv2</span><span class="o">.</span><span class="n">putText</span><span class="p">(</span>
+                    <span class="n">copy_of_orig_img</span><span class="p">,</span>
+                    <span class="n">label</span><span class="p">,</span>
+                    <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">x1</span><span class="p">),</span> <span class="n">label_y</span> <span class="o">-</span> <span class="mi">5</span><span class="p">),</span>
+                    <span class="n">cv2</span><span class="o">.</span><span class="n">FONT_HERSHEY_SIMPLEX</span><span class="p">,</span>
+                    <span class="mf">0.5</span><span class="p">,</span>
+                    <span class="n">bbox_text_color_tuple</span><span class="p">,</span>
+                    <span class="mi">2</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+                <span class="c1"># cv2 stores images differently than plt: https://stackoverflow.com/questions/38598118/difference-between-plt-imshow-and-cv2-imshow</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">copy_of_orig_img</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_BGR2RGB</span><span class="p">))</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">save_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">cv2</span><span class="o">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="n">copy_of_orig_img</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Image with detections saved to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">save_path</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">return_results</span> <span class="ow">and</span> <span class="n">valid_detection_found</span><span class="p">:</span>
+                <span class="n">final_results</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">detection_results</span><span class="p">,</span> <span class="n">copy_of_orig_img</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">final_results</span> <span class="k">if</span> <span class="n">final_results</span> <span class="k">else</span> <span class="kc">None</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../isaac_yolo.html#isaac_yolo.isaac_yolo_model.main">[docs]</a>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Example usage of IsaacYoloModel.&quot;&quot;&quot;</span>
+    <span class="n">isaac_yolo_model</span> <span class="o">=</span> <span class="n">IsaacYoloModel</span><span class="p">(</span><span class="n">path_to_weights</span><span class="o">=</span><span class="n">MODEL_WEIGHTS_100_EPOCHS_PATH</span><span class="p">,</span> <span class="n">img_size</span><span class="o">=</span><span class="n">TARGET_BACKGROUND_SIZE</span><span class="p">)</span>
+
+    <span class="c1"># download some images you find online for this to work.</span>
+    <span class="c1"># since these are in my downloads folder which is not in this repo.</span>
+    <span class="n">image_paths</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">Path</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;C:\Users\hamza\Downloads\angel_room.webp&quot;</span><span class="p">),</span>
+        <span class="n">Path</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;C:\Users\hamza\Downloads\death_certificate.jpg&quot;</span><span class="p">),</span>
+        <span class="n">Path</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;C:\Users\hamza\Downloads\devil_room.jpg&quot;</span><span class="p">),</span>
+        <span class="n">Path</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;C:\Users\hamza\Downloads\devil_room_2.jpg&quot;</span><span class="p">),</span>
+        <span class="n">Path</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;C:\Users\hamza\Downloads\devil_room_3.webp&quot;</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="n">isaac_yolo_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">images</span><span class="o">=</span><span class="n">image_paths</span><span class="p">)</span>
+    <span class="n">isaac_yolo_model</span><span class="o">.</span><span class="n">visualize_results</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">results</span><span class="w"> </span><span class="si">= }</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Hamza Khan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

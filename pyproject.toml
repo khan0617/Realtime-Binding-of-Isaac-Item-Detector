@@ -96,7 +96,7 @@ dev = [
 
 # pip install -e .[docs]
 # to generate docs, we first need to generate all the .rst files for our .py modules:
-#   run `sphinx-autodoc -o source src` from the project root
+#   run `sphinx-apidoc -o source src` from the project root
 #   This creates the *.rst in source/
 # next, run `make html`, this creates build/ in the project root.
 # to update the sphinx docs on github pages, move the content in build/html to docs/

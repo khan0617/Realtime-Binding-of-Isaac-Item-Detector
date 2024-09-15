@@ -1,3 +1,9 @@
+"""
+`app.py`
+
+The entrypoint for the webapp.
+"""
+
 import base64
 import logging
 import os
@@ -6,7 +12,7 @@ from threading import Event, Lock
 
 import cv2
 import numpy as np
-from flask import Flask, Response, abort, render_template, send_from_directory, url_for
+from flask import Flask, Response, render_template, send_from_directory
 from flask_socketio import SocketIO  # type: ignore
 
 from constants import (
@@ -38,40 +44,40 @@ class VisualizationSettings:
     bbox_text_color: str
 
 
-app = Flask(__name__)
-socketio = SocketIO(app)
+_app = Flask(__name__)
+_socketio = SocketIO(_app)
 
-screen_grabber = ScreenGrabber()
-isaac_yolo_model = IsaacYoloModel(
+_screen_grabber = ScreenGrabber()
+_isaac_yolo_model = IsaacYoloModel(
     path_to_weights=MODEL_WEIGHTS_100_EPOCHS_PATH,
     img_size=TARGET_BACKGROUND_SIZE,
 )
-isaac_live_capture_handler = IsaacLiveCaptureHandler(screen_grabber, isaac_yolo_model)
+_isaac_live_capture_handler = IsaacLiveCaptureHandler(_screen_grabber, _isaac_yolo_model)
 
 # event to signal when to stop the background task
-should_run_capture = Event()
+_should_run_capture = Event()
 
-visualization_settings = VisualizationSettings(
+_visualization_settings = VisualizationSettings(
     confidence_threshold=CONF_THRESHOLD, bbox_color=BBOX_COLOR, bbox_text_color=BBOX_TEXT_COLOR
 )
 
 # lock when we update the global_settings dict just in case
-settings_lock = Lock()
+_settings_lock = Lock()
 
 
-@app.route("/")
+@_app.route("/")
 def index() -> str:
     """Serve the main page of the app."""
-    with settings_lock:
+    with _settings_lock:
         settings = {
-            "confidence_threshold": visualization_settings.confidence_threshold,
-            "bbox_color": visualization_settings.bbox_color,
-            "bbox_text_color": visualization_settings.bbox_text_color,
+            "confidence_threshold": _visualization_settings.confidence_threshold,
+            "bbox_color": _visualization_settings.bbox_color,
+            "bbox_text_color": _visualization_settings.bbox_text_color,
         }
     return render_template("index.html", visualization_settings=settings)
 
 
-@app.route("/item_images/<path:item_id_tail>")
+@_app.route("/item_images/<path:item_id_tail>")
 def item_images(item_id_tail: str) -> Response:
     """Serve item images from the local data/items directory.
 
@@ -84,28 +90,28 @@ def item_images(item_id_tail: str) -> Response:
     Returns:
         Response object for the file, or a 404 if unavailable.
     """
-    project_root = os.path.dirname(app.instance_path)
+    project_root = os.path.dirname(_app.instance_path)
     directory = os.path.join(project_root, DATA_DIR, ITEM_DIR, item_id_tail)
     logger.info("item_images(%s): Sending %s", item_id_tail, f"{directory}/{UNMODIFIED_FILE_NAME}")
     return send_from_directory(directory, UNMODIFIED_FILE_NAME)
 
 
-@socketio.on("connect")
+@_socketio.on("connect")
 def on_connect():
     """Handle client connection and start the background capture task."""
     logger.info("on_connect: Client connected, starting capture task.")
-    should_run_capture.set()
-    socketio.start_background_task(target=capture_and_emit)
+    _should_run_capture.set()
+    _socketio.start_background_task(target=capture_and_emit)
 
 
-@socketio.on("disconnect")
+@_socketio.on("disconnect")
 def on_disconnect():
     """Handle client disconnection and stop the background capture task."""
     logger.info("on_disconnect: Client disconnectd, stopping capture task.")
-    should_run_capture.clear()
+    _should_run_capture.clear()
 
 
-@socketio.on("update_settings")
+@_socketio.on("update_settings")
 def handle_update_settings(data: dict[str, str | float]) -> None:
     """Handle incoming settings from the client.
 
@@ -120,15 +126,15 @@ def handle_update_settings(data: dict[str, str | float]) -> None:
     Args:
         data (dict[str, str | float]): Dict containing bbox color (str), bbox text color (str), and conf threshold (float)
     """
-    with settings_lock:
+    with _settings_lock:
         if "confidenceThreshold" in data:
-            visualization_settings.confidence_threshold = float(data["confidenceThreshold"])
-            isaac_yolo_model.confidence_threshold = visualization_settings.confidence_threshold
+            _visualization_settings.confidence_threshold = float(data["confidenceThreshold"])
+            _isaac_yolo_model.confidence_threshold = _visualization_settings.confidence_threshold
         if "bboxColor" in data:
-            visualization_settings.bbox_color = str(data["bboxColor"])
+            _visualization_settings.bbox_color = str(data["bboxColor"])
         if "bboxLabelColor" in data:
-            visualization_settings.bbox_text_color = str(data["bboxLabelColor"])
-        logger.info("handle_update_settings: Updated global settings: %s", str(visualization_settings))
+            _visualization_settings.bbox_text_color = str(data["bboxLabelColor"])
+        logger.info("handle_update_settings: Updated global settings: %s", str(_visualization_settings))
 
 
 # pylint: disable=no-member
@@ -175,7 +181,7 @@ def get_detection_metadata(detection_results: list[list[DetectionResult]]) -> li
     detected_item_metadata: list[dict[str, str | float]] = []
     for list_of_detection_results in detection_results:
         for single_result in list_of_detection_results:
-            if single_result.confidence < visualization_settings.confidence_threshold:
+            if single_result.confidence < _visualization_settings.confidence_threshold:
                 continue
             isaac_item = get_isaac_item_from_yolo_class_id(str(single_result.class_id))
             logger.info("capture_and_emit: Got IsaacItem for %s", isaac_item.name)
@@ -194,7 +200,7 @@ def get_detection_metadata(detection_results: list[list[DetectionResult]]) -> li
 
 def capture_and_emit() -> None:
     """Runs the capture and inference, then emits the results via SocketIO."""
-    while should_run_capture.is_set():
+    while _should_run_capture.is_set():
         try:
             # convert each np.ndarray (image) to base64
             # we'll send the encoded images over via socketio.emit
@@ -206,11 +212,11 @@ def capture_and_emit() -> None:
             # run inference on the game window
             logger.info(
                 "capture_and_emit: Calling run_capture_and_inference(bbox_color=%s, bbox_text_color=%s",
-                visualization_settings.bbox_color,
-                visualization_settings.bbox_text_color,
+                _visualization_settings.bbox_color,
+                _visualization_settings.bbox_text_color,
             )
-            inference_results = isaac_live_capture_handler.run_capture_and_inference(
-                bbox_color=visualization_settings.bbox_color, bbox_text_color=visualization_settings.bbox_text_color
+            inference_results = _isaac_live_capture_handler.run_capture_and_inference(
+                bbox_color=_visualization_settings.bbox_color, bbox_text_color=_visualization_settings.bbox_text_color
             )
 
             if inference_results:
@@ -222,7 +228,7 @@ def capture_and_emit() -> None:
 
             else:
                 # if we don't have any results we'll just take a screenshot.
-                frame = screen_grabber.capture_window()
+                frame = _screen_grabber.capture_window()
                 encoded_images = base64_encode_images([frame], convert_bgr_to_rgb=True)
                 logger.info("capture_and_emit: No items found on screen, sending screenshot.")
 
@@ -239,7 +245,7 @@ def capture_and_emit() -> None:
                 len(detected_item_metadata),
                 f"detected_item_metadata: {({d['name']: d['confidence'] for d in detected_item_metadata})}",
             )
-            socketio.emit("inference_update", {"images": encoded_images, "item_metadata": detected_item_metadata})
+            _socketio.emit("inference_update", {"images": encoded_images, "item_metadata": detected_item_metadata})
 
         except Exception as e:  # pylint: disable=broad-exception-caught
             logger.error("capture_and_emit: error during inference: %s", str(e))
@@ -247,8 +253,8 @@ def capture_and_emit() -> None:
 
 def main() -> None:
     # default runs on http://localhost:5000
-    logger.info("main: app.root_path = %s, app.instance_path = %s", app.root_path, app.instance_path)
-    socketio.run(app)
+    logger.info("main: app.root_path = %s, app.instance_path = %s", _app.root_path, _app.instance_path)
+    _socketio.run(_app)
 
 
 if __name__ == "__main__":

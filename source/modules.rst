@@ -1,6 +1,8 @@
+src
+===
+
 .. toctree::
    :maxdepth: 4
-   :caption: Welcome to Realtime-Binding-of-Isaac-Item-Detector:
 
    constants
    generate_augmented_items

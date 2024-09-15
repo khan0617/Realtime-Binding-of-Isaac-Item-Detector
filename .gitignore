@@ -6,7 +6,6 @@ yolo_isaac_dataset/
 runs/
 data.yaml
 *.pt
-*.json
 *.png
 
 # below is the github recommended python .gitignore (above is my additions)

@@ -86,17 +86,22 @@
 <span class="kn">from</span> <span class="nn">constants</span> <span class="kn">import</span> <span class="n">JSON_DUMP_FILE</span>
 <span class="kn">from</span> <span class="nn">image_processing.bbox</span> <span class="kn">import</span> <span class="n">YoloBbox</span>
 <span class="kn">from</span> <span class="nn">logging_config</span> <span class="kn">import</span> <span class="n">configure_logging</span>
+<span class="kn">from</span> <span class="nn">scraping.isaac_item</span> <span class="kn">import</span> <span class="n">IsaacItem</span>
 
 <span class="n">configure_logging</span><span class="p">()</span>
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
 <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_load_json_data</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="k">def</span> <span class="nf">_load_json_data</span><span class="p">(</span><span class="n">json_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">JSON_DUMP_FILE</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Load in the JSON data from JSON_DUMP_FILE. Contains data on Isaac Items.</span>
+
 <span class="sd">    See scraper.py for more info on how objects are dumped to json.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        json_file (str, optional): The json file where IsaacItem objects have been dumped.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">JSON_DUMP_FILE</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">json_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data</span>
 
@@ -141,13 +146,40 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The yolo_class_id which represents this IsaacItem.</span>
-<span class="sd">        Raise ValueError on failure.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError on failure, meaning no json object with item_id_tail exists.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">json_data</span> <span class="o">=</span> <span class="n">_load_json_data</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">tail</span><span class="p">,</span> <span class="n">item_data</span> <span class="ow">in</span> <span class="n">json_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">item_id_tail</span> <span class="o">==</span> <span class="n">tail</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">item_data</span><span class="p">[</span><span class="s2">&quot;yolo_class_id&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">item_id_tail</span> <span class="ow">in</span> <span class="n">json_data</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">json_data</span><span class="p">[</span><span class="n">item_id_tail</span><span class="p">][</span><span class="s2">&quot;yolo_class_id&quot;</span><span class="p">]</span>
     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;get_yolo_class_id_from_isaac_id_tail: No yolo_class_id exists for </span><span class="si">{</span><span class="n">item_id_tail</span><span class="w"> </span><span class="si">= }</span><span class="s2">.&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_isaac_item_from_yolo_class_id">
+<a class="viewcode-back" href="../utils.html#utils.get_isaac_item_from_yolo_class_id">[docs]</a>
+<span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">get_isaac_item_from_yolo_class_id</span><span class="p">(</span><span class="n">yolo_class_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IsaacItem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the IsaacItem object corresponding to this yolo_class_id.</span>
+
+<span class="sd">    Example: The &quot;Forget Me Now&quot; item has item_id=&quot;5.100.127&quot; and yolo_class_id=&quot;24&quot;.</span>
+<span class="sd">    get_isaac_item_from__item_id_tail(&quot;24&quot;) will return IsaacItem(name=&quot;Forget Me Now&quot;, item_id=&quot;5.100.127&quot;, ...)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        yolo_class_id (str): The yolo class id for an IsaacItem.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        IsaacItem populated with the appropriate information.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If no object with the yolo_class_id is found in the json data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">json_data</span> <span class="o">=</span> <span class="n">_load_json_data</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">item_data</span> <span class="ow">in</span> <span class="n">json_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">yolo_class_id</span> <span class="o">==</span> <span class="n">item_data</span><span class="p">[</span><span class="s2">&quot;yolo_class_id&quot;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="n">IsaacItem</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">item_data</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;get_isaac_item_from_yolo_class_id: No yolo_class_id exists for </span><span class="si">{</span><span class="n">yolo_class_id</span><span class="w"> </span><span class="si">= }</span><span class="s2">.&quot;</span><span class="p">)</span></div>
 
 
 
@@ -170,11 +202,45 @@
 
 
 
+<div class="viewcode-block" id="hex_to_bgr">
+<a class="viewcode-back" href="../utils.html#utils.hex_to_bgr">[docs]</a>
+<span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">hex_to_bgr</span><span class="p">(</span><span class="n">hex_color</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convers a hex color string to a BGR tuple for OpenCV.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hex_color (str): Hex color string (ex: &quot;#FF0000&quot;)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple[int, int, int]: BGR tuple (ex: (0, 0, 255)).</span>
+<span class="sd">        Tuple values will be in range [0, 255]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">hex_color</span> <span class="o">=</span> <span class="n">hex_color</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">)</span>
+    <span class="n">rgb_tuple</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">hex_color</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">],</span> <span class="n">base</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+    <span class="n">bgr_tuple</span> <span class="o">=</span> <span class="n">rgb_tuple</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># reverse the rgb tuple to get bgr</span>
+    <span class="k">return</span> <span class="n">bgr_tuple</span></div>
+
+
+
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../utils.html#utils.main">[docs]</a>
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="c1"># TODO: remove these asserts and put them in test/</span>
     <span class="n">sad_onion_id_tail</span> <span class="o">=</span> <span class="s2">&quot;1&quot;</span>
-    <span class="k">assert</span> <span class="n">get_yolo_class_id_from_item_id_tail</span><span class="p">(</span><span class="n">sad_onion_id_tail</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;419&quot;</span></div>
+    <span class="k">assert</span> <span class="n">get_yolo_class_id_from_item_id_tail</span><span class="p">(</span><span class="n">sad_onion_id_tail</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;419&quot;</span>
+
+    <span class="n">forget_me_now_yolo_class_id</span> <span class="o">=</span> <span class="s2">&quot;24&quot;</span>
+    <span class="k">assert</span> <span class="n">get_isaac_item_from_yolo_class_id</span><span class="p">(</span><span class="n">forget_me_now_yolo_class_id</span><span class="p">)</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;Forget Me Now&quot;</span>
+
+    <span class="n">black_hex</span> <span class="o">=</span> <span class="s2">&quot;#000000&quot;</span>
+    <span class="n">black_bgr</span> <span class="o">=</span> <span class="n">hex_to_bgr</span><span class="p">(</span><span class="n">black_hex</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">black_bgr</span> <span class="o">==</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">green_hex</span> <span class="o">=</span> <span class="s2">&quot;#00FF00&quot;</span>
+    <span class="n">green_bgr</span> <span class="o">=</span> <span class="n">hex_to_bgr</span><span class="p">(</span><span class="n">green_hex</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">green_bgr</span> <span class="o">==</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="n">get_isaac_item_from_yolo_class_id</span><span class="p">(</span><span class="s2">&quot;643&quot;</span><span class="p">))</span>  <span class="c1"># should be Guppy&#39;s Eye.</span></div>
 
 
 

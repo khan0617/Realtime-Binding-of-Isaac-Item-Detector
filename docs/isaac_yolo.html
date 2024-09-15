@@ -46,34 +46,39 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="constants.html">constants module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="generate_augmented_items.html">generate_augmented_items module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="image_processing.html">image_processing package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="isaac_web_app.html">isaac_web_app package</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">isaac_yolo package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-isaac_yolo.isaac_yolo_dataset_generator">isaac_yolo.isaac_yolo_dataset_generator module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair"><code class="docutils literal notranslate"><span class="pre">ImageLabelPair</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair.image_path"><code class="docutils literal notranslate"><span class="pre">ImageLabelPair.image_path</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair.label_path"><code class="docutils literal notranslate"><span class="pre">ImageLabelPair.label_path</span></code></a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">src</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="constants.html">constants module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_augmented_items.html">generate_augmented_items module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="image_processing.html">image_processing package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="isaac_web_app.html">isaac_web_app package</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">isaac_yolo package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-isaac_yolo.isaac_yolo_dataset_generator">isaac_yolo.isaac_yolo_dataset_generator module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair"><code class="docutils literal notranslate"><span class="pre">ImageLabelPair</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.copy_files_to_yolo_dataset"><code class="docutils literal notranslate"><span class="pre">copy_files_to_yolo_dataset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.create_dataset_directories"><code class="docutils literal notranslate"><span class="pre">create_dataset_directories()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.delete_overlays_dir"><code class="docutils literal notranslate"><span class="pre">delete_overlays_dir()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.generate_yolo_yaml_config"><code class="docutils literal notranslate"><span class="pre">generate_yolo_yaml_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.get_image_label_file_pairs"><code class="docutils literal notranslate"><span class="pre">get_image_label_file_pairs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.split_dataset"><code class="docutils literal notranslate"><span class="pre">split_dataset()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.copy_files_to_yolo_dataset"><code class="docutils literal notranslate"><span class="pre">copy_files_to_yolo_dataset()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.create_dataset_directories"><code class="docutils literal notranslate"><span class="pre">create_dataset_directories()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.delete_overlays_dir"><code class="docutils literal notranslate"><span class="pre">delete_overlays_dir()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.generate_yolo_yaml_config"><code class="docutils literal notranslate"><span class="pre">generate_yolo_yaml_config()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.get_image_label_file_pairs"><code class="docutils literal notranslate"><span class="pre">get_image_label_file_pairs()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#isaac_yolo.isaac_yolo_dataset_generator.split_dataset"><code class="docutils literal notranslate"><span class="pre">split_dataset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-isaac_yolo.isaac_yolo_model">isaac_yolo.isaac_yolo_model module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#isaac_yolo.isaac_yolo_model.DetectionResult"><code class="docutils literal notranslate"><span class="pre">DetectionResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#isaac_yolo.isaac_yolo_model.IsaacYoloModel"><code class="docutils literal notranslate"><span class="pre">IsaacYoloModel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#isaac_yolo.isaac_yolo_model.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#module-isaac_yolo">Module contents</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-isaac_yolo">Module contents</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="logging_config.html">logging_config module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="scraping.html">scraping package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="setup_everything.html">setup_everything module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="utils.html">utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging_config.html">logging_config module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scraping.html">scraping package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="setup_everything.html">setup_everything module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">utils module</a></li>
+</ul>
+</li>
 </ul>
 
         </div>
@@ -90,7 +95,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="modules.html">&lt;no title&gt;</a></li>
+          <li class="breadcrumb-item"><a href="modules.html">src</a></li>
       <li class="breadcrumb-item active">isaac_yolo package</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/isaac_yolo.rst.txt" rel="nofollow"> View page source</a>
@@ -108,6 +113,7 @@
 </section>
 <section id="module-isaac_yolo.isaac_yolo_dataset_generator">
 <span id="isaac-yolo-isaac-yolo-dataset-generator-module"></span><h2>isaac_yolo.isaac_yolo_dataset_generator module<a class="headerlink" href="#module-isaac_yolo.isaac_yolo_dataset_generator" title="Link to this heading"></a></h2>
+<p><cite>isaac_yolo_dataset_generator.py</cite></p>
 <p>Takes data/overlay/ and creates a dataset usable by YOLO, including train/test/valid directories.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_dataset_generator.ImageLabelPair">
@@ -297,6 +303,150 @@ Ex: data/overlays</p>
 <dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
+</dd></dl>
+
+</section>
+<section id="module-isaac_yolo.isaac_yolo_model">
+<span id="isaac-yolo-isaac-yolo-model-module"></span><h2>isaac_yolo.isaac_yolo_model module<a class="headerlink" href="#module-isaac_yolo.isaac_yolo_model" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_model.DetectionResult">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">isaac_yolo.isaac_yolo_model.</span></span><span class="sig-name descname"><span class="pre">DetectionResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/isaac_yolo/isaac_yolo_model.html#DetectionResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#isaac_yolo.isaac_yolo_model.DetectionResult" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Represents a single detection result from a YOLO model.</p>
+<p>Use this class to represent the dicts returned by <cite>result.summary()</cite>.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_model.DetectionResult.class_id">
+<span class="sig-name descname"><span class="pre">class_id</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#isaac_yolo.isaac_yolo_model.DetectionResult.class_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_model.DetectionResult.confidence">
+<span class="sig-name descname"><span class="pre">confidence</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></em><a class="headerlink" href="#isaac_yolo.isaac_yolo_model.DetectionResult.confidence" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_model.DetectionResult.from_dict">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/isaac_yolo/isaac_yolo_model.html#DetectionResult.from_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#isaac_yolo.isaac_yolo_model.DetectionResult.from_dict" title="Link to this definition"></a></dt>
+<dd><p>Create a DetectionResult object from a dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>d</strong> (<em>dict</em>) – <p>A dictionary with keys ‘name’, ‘class’, ‘confidence’, and ‘box’.
+Example:
+{‘box’: {‘x1’: 404.6, ‘x2’: 481.8, ‘y1’: 334.9, ‘y2’: 412.1},</p>
+<blockquote>
+<div><p>’class’: 317,
+‘confidence’: 0.88475,
+‘name’: “Mom’s Coin Purse”}</p>
+</div></blockquote>
+</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An instance of DetectionResult populated with the data from the dictionary.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#isaac_yolo.isaac_yolo_model.DetectionResult" title="isaac_yolo.isaac_yolo_model.DetectionResult">DetectionResult</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_model.DetectionResult.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#isaac_yolo.isaac_yolo_model.DetectionResult.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_model.DetectionResult.x1">
+<span class="sig-name descname"><span class="pre">x1</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></em><a class="headerlink" href="#isaac_yolo.isaac_yolo_model.DetectionResult.x1" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_model.DetectionResult.x2">
+<span class="sig-name descname"><span class="pre">x2</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></em><a class="headerlink" href="#isaac_yolo.isaac_yolo_model.DetectionResult.x2" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_model.DetectionResult.y1">
+<span class="sig-name descname"><span class="pre">y1</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></em><a class="headerlink" href="#isaac_yolo.isaac_yolo_model.DetectionResult.y1" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_model.DetectionResult.y2">
+<span class="sig-name descname"><span class="pre">y2</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></em><a class="headerlink" href="#isaac_yolo.isaac_yolo_model.DetectionResult.y2" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_model.IsaacYoloModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">isaac_yolo.isaac_yolo_model.</span></span><span class="sig-name descname"><span class="pre">IsaacYoloModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.6</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/isaac_yolo/isaac_yolo_model.html#IsaacYoloModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#isaac_yolo.isaac_yolo_model.IsaacYoloModel" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>IsaacYoloModel is responsible for making bounding-box predictions on images or video of the game.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_model.IsaacYoloModel.confidence_threshold">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">confidence_threshold</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#isaac_yolo.isaac_yolo_model.IsaacYoloModel.confidence_threshold" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_model.IsaacYoloModel.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">images</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/isaac_yolo/isaac_yolo_model.html#IsaacYoloModel.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#isaac_yolo.isaac_yolo_model.IsaacYoloModel.predict" title="Link to this definition"></a></dt>
+<dd><p>Perform object detection using the YOLO model on the images supplied by image_paths.</p>
+<p>Note: before calling this, be sure your images have been resized to the target background size
+of (1000, 625) because thta’s what the model has been trained on.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>images</strong> (<em>list</em><em>[</em><em>str</em><em>] </em><em>| </em><em>list</em><em>[</em><em>Image</em><em>] </em><em>| </em><em>list</em><em>[</em><em>np.ndarray</em><em>]</em>) – List of image paths, image objects, or ndarray to run inference on.
+To run inference on one image, pass a list with 1 element like: [‘screenshots/img1.jpg’].</p></li>
+<li><p><strong>stream</strong> (<em>bool</em>) – When True, run the YOLO model in stream mode, which returns a generator of Result objects.
+When False, return a list of Results instead, loaded into memory all at once.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Results</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[Results] when stream=False, otherwise Generator[Results] when Stream=True.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_model.IsaacYoloModel.visualize_results">
+<span class="sig-name descname"><span class="pre">visualize_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_unicorn_stump_and_coal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox_text_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/isaac_yolo/isaac_yolo_model.html#IsaacYoloModel.visualize_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#isaac_yolo.isaac_yolo_model.IsaacYoloModel.visualize_results" title="Link to this definition"></a></dt>
+<dd><p>Viusualize prediction results on the images.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>results</strong> (<em>Results</em><em> | </em><em>Iterable</em><em>[</em><em>Results</em><em>]</em>) – Results object or an Iterable of Results objects from the YOLO model prediction.</p></li>
+<li><p><strong>show</strong> (<em>bool</em>) – If True, display the image using matplotlib.</p></li>
+<li><p><strong>save_path</strong> (<em>str</em><em> | </em><em>None</em>) – If specified, save the image with bounding boxes to this path.</p></li>
+<li><p><strong>return_results</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, return a list of tuples of images with the bounding boxes overlaid with associated DetectionResults.</p></li>
+<li><p><strong>skip_unicorn_stump_and_coal</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, ignore any detected objects for “Unicorn Stump” and “A Lump of Coal”.
+This is a fix for the model detecting base tears as unicorn stump.</p></li>
+<li><p><strong>bbox_color</strong> (<em>str</em><em>, </em><em>optional</em>) – Color of any drawn bounding boxes. Default is green. Ex: “#00FF00”.</p></li>
+<li><p><strong>bbox_text_color</strong> (<em>str</em><em>, </em><em>optional</em>) – Color of the text drawn on the bounding boxes. Default is black. Ex: “#000000”</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<a class="reference internal" href="#isaac_yolo.isaac_yolo_model.DetectionResult" title="isaac_yolo.isaac_yolo_model.DetectionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">DetectionResult</span></code></a>], <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>]] | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>list[tuple[list[DetectionResult], np.ndarray]] if return_results=True, else None. The np.ndarrays are in cv2 format,</dt><dd><p>meaning they’re in BGR. To plot via something like matplotlib, you may need to run: cv2.cvtColor(my_array, cv2.COLOR_BGR2RGB).
+The list[DetectionResult] will correspond to all of the detected items on the corresponding np.ndarray image.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="isaac_yolo.isaac_yolo_model.main">
+<span class="sig-prename descclassname"><span class="pre">isaac_yolo.isaac_yolo_model.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/isaac_yolo/isaac_yolo_model.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#isaac_yolo.isaac_yolo_model.main" title="Link to this definition"></a></dt>
+<dd><p>Example usage of IsaacYoloModel.</p>
 </dd></dl>
 
 </section>
