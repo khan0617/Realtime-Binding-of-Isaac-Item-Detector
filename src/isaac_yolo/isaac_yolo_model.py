@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, cast
@@ -13,8 +12,9 @@ from PIL.Image import Image
 from ultralytics import YOLO  # type: ignore
 from ultralytics.engine.results import Boxes, Results  # type: ignore
 
-from constants import MODEL_WEIGHTS_100_EPOCHS_PATH, TARGET_BACKGROUND_SIZE
+from constants import BBOX_COLOR, BBOX_TEXT_COLOR, CONF_THRESHOLD, MODEL_WEIGHTS_100_EPOCHS_PATH, TARGET_BACKGROUND_SIZE
 from logging_config import configure_logging
+from utils import hex_to_bgr
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -66,7 +66,9 @@ class DetectionResult:
 class IsaacYoloModel:
     """IsaacYoloModel is responsible for making bounding-box predictions on images or video of the game."""
 
-    def __init__(self, path_to_weights, img_size: tuple[int, int], confidence_threshold: float = 0.2) -> None:
+    def __init__(
+        self, path_to_weights, img_size: tuple[int, int], confidence_threshold: float = CONF_THRESHOLD
+    ) -> None:
         """
         Initialize the IsaacYoloModel.
 
@@ -78,6 +80,14 @@ class IsaacYoloModel:
         self._img_size = img_size
         self._confidence_threshold = confidence_threshold
         self._model = self._load_model(path_to_weights)
+
+    @property
+    def confidence_threshold(self) -> float:
+        return self._confidence_threshold
+
+    @confidence_threshold.setter
+    def confidence_threshold(self, conf_threshold: float) -> None:
+        self._confidence_threshold = conf_threshold
 
     def _load_model(self, path_to_weights: str, task: str = "detect") -> YOLO:
         """
@@ -111,14 +121,16 @@ class IsaacYoloModel:
         return results
 
     # pylint: disable=all
-    def visulize_results(
+    def visualize_results(
         self,
         results: Results | Iterable[Results],
         show: bool = True,
         save_path: str | None = None,
         return_results: bool = False,
         skip_unicorn_stump_and_coal: bool = True,
-    ) -> list[np.ndarray] | None:
+        bbox_color: str | None = None,
+        bbox_text_color: str | None = None,
+    ) -> list[tuple[list[DetectionResult], np.ndarray]] | None:
         """
         Viusualize prediction results on the images.
 
@@ -126,18 +138,26 @@ class IsaacYoloModel:
             results (Results | Iterable[Results]): Results object or an Iterable of Results objects from the YOLO model prediction.
             show (bool): If True, display the image using matplotlib.
             save_path (str | None): If specified, save the image with bounding boxes to this path.
-            return_results (bool, optional): If True, return a list of images with the bounding boxes overlaid, along with their class IDs.
+            return_results (bool, optional): If True, return a list of tuples of images with the bounding boxes overlaid with associated DetectionResults.
             skip_unicorn_stump_and_coal (bool, optional): If True, ignore any detected objects for "Unicorn Stump" and "A Lump of Coal".
                 This is a fix for the model detecting base tears as unicorn stump.
+            bbox_color (str, optional): Color of any drawn bounding boxes. Default is green. Ex: "#00FF00".
+            bbox_text_color (str, optional): Color of the text drawn on the bounding boxes. Default is black. Ex: "#000000"
 
         Returns:
-            list[tuple[str, np.ndarray]] if return_visualized_results=True, else None. The np.ndarrays are in cv2 format,
-                meaning they're in BGR. To plot via something like matplotlib, you'll need to run: cv2.cvtColor(my_array, cv2.COLOR_BGR2RGB)
+            list[tuple[list[DetectionResult], np.ndarray]] if return_results=True, else None. The np.ndarrays are in cv2 format,
+                meaning they're in BGR. To plot via something like matplotlib, you may need to run: cv2.cvtColor(my_array, cv2.COLOR_BGR2RGB).
+                The list[DetectionResult] will correspond to all of the detected items on the corresponding np.ndarray image.
         """
+        bbox_color_tuple = hex_to_bgr(bbox_color) if bbox_color is not None else hex_to_bgr(BBOX_COLOR)
+        bbox_text_color_tuple = (
+            hex_to_bgr(bbox_text_color) if bbox_text_color is not None else hex_to_bgr(BBOX_TEXT_COLOR)
+        )
+
         if not isinstance(results, Iterable):
             results = [results]
 
-        final_results: list[tuple[list[str], np.ndarray]] = []
+        final_results = []
 
         for result in results:
             copy_of_orig_img = cast(np.ndarray, result.orig_img).copy()
@@ -152,6 +172,9 @@ class IsaacYoloModel:
             )
 
             for det in detection_results:
+                if det.confidence < self._confidence_threshold:
+                    continue
+
                 # unfortunately the model seems to think default tears are unicorn stumps or lump of coal.
                 if skip_unicorn_stump_and_coal and (
                     "unicorn stump" in det.name.lower() or "lump of coal" in det.name.lower()
@@ -162,7 +185,9 @@ class IsaacYoloModel:
                 valid_detection_found = True
 
                 # draw the bounding box, modifies the image in place
-                cv2.rectangle(copy_of_orig_img, (int(det.x1), int(det.y1)), (int(det.x2), int(det.y2)), (0, 255, 0), 2)
+                cv2.rectangle(
+                    copy_of_orig_img, (int(det.x1), int(det.y1)), (int(det.x2), int(det.y2)), bbox_color_tuple, 2
+                )
 
                 # prepare the label
                 label = f"{det.name}: {det.confidence:.2f}"
@@ -174,13 +199,19 @@ class IsaacYoloModel:
                     copy_of_orig_img,
                     (int(det.x1), label_y - label_size[1] - 10),
                     (int(det.x1) + label_size[0], label_y + 5),
-                    (0, 255, 0),
+                    bbox_color_tuple,
                     cv2.FILLED,
                 )
 
                 # put the label text on the image
                 cv2.putText(
-                    copy_of_orig_img, label, (int(det.x1), label_y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2
+                    copy_of_orig_img,
+                    label,
+                    (int(det.x1), label_y - 5),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    bbox_text_color_tuple,
+                    2,
                 )
 
             if show:
@@ -194,7 +225,7 @@ class IsaacYoloModel:
                 logger.info("Image with detections saved to %s", save_path)
 
             if return_results and valid_detection_found:
-                final_results.append(copy_of_orig_img)
+                final_results.append((detection_results, copy_of_orig_img))
 
         return final_results if final_results else None
 
@@ -214,7 +245,7 @@ def main():
     ]
 
     results = isaac_yolo_model.predict(images=image_paths)
-    isaac_yolo_model.visulize_results(results, show=True)
+    isaac_yolo_model.visualize_results(results, show=True)
     print(f"{results = }")
 
 
