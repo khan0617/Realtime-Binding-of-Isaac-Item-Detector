@@ -48,3 +48,8 @@ MODEL_WEIGHTS_100_EPOCHS_PATH = "model_weights/isaac_yolo_100_epochs_v1.pt"
 # for repentence, the exact window title is: "Binding of Isaac: Repentance"
 # but so this can work with older versions I'll remove "Repentance"
 ISAAC_WINDOW_TITLE = "Binding of Isaac"
+
+# frontend display customizations
+CONF_THRESHOLD = 0.6
+BBOX_COLOR = "#00FF00"
+BBOX_TEXT_COLOR = "#000000"
