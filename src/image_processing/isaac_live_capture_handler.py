@@ -13,7 +13,7 @@ from PIL import Image
 
 from constants import MODEL_WEIGHTS_100_EPOCHS_PATH, TARGET_BACKGROUND_SIZE
 from image_processing.screen_grabber import ScreenGrabber
-from isaac_yolo.isaac_yolo_model import IsaacYoloModel
+from isaac_yolo.isaac_yolo_model import DetectionResult, IsaacYoloModel
 from logging_config import configure_logging
 
 configure_logging()
@@ -37,22 +37,32 @@ class IsaacLiveCaptureHandler:
         self._screen_grabber = screen_grabber
         self._isaac_yolo_model = isaac_yolo_model
 
-    def run_capture_and_inference(self, show: bool = False) -> list[np.ndarray] | None:
+    def run_capture_and_inference(
+        self, show: bool = False, bbox_color: str | None = None, bbox_text_color: str | None = None
+    ) -> list[tuple[list[DetectionResult], np.ndarray]] | None:
         """
         Capture the game window and run inference.
 
         Args:
             show (bool, optional): If True, show each of the detection results with bounding boxes and labels draw.
+            bbox_color (str, optional): The color to draw the bounding box in, as a hex string. Ex: "#00FF00".
+            bbox_text_color (str, optional): The color to draw the detected item text in, as a hex string. Ex: "#000000".
 
         Returns:
-            list[np.ndarray] | None: A list of images with bounding boxes + labels overlaid.
-                If no results were available or the call failed, return None.
+            list[tuple[list[DetectionResult], np.ndarray]] | None: A list of tuples. Each tuple has a list of DetectionResult,
+            each having information for the item detected on screen. The np.ndarray will have bounding boxes drawn around all detected images.
+            If no results were available or the call failed, return None.
         """
         try:
             frame = Image.fromarray(self._screen_grabber.capture_window())
             results = self._isaac_yolo_model.predict([frame], stream=False)
-            visualized_results = self._isaac_yolo_model.visulize_results(
-                results=results, show=show, return_results=True, skip_unicorn_stump_and_coal=True
+            visualized_results = self._isaac_yolo_model.visualize_results(
+                results=results,
+                show=show,
+                return_results=True,
+                skip_unicorn_stump_and_coal=True,
+                bbox_color=bbox_color,
+                bbox_text_color=bbox_text_color,
             )
             return visualized_results
 
