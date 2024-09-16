@@ -88,7 +88,7 @@ def _augment_item_image(
             I.e. if full_item_dir == "data/items/", then we should have data/items/145/, data/items/72/, etc.
         seed (int): A seed to observe reproducible results when running augment_image() repeatedly.
     """
-    output_dir = os.path.join(full_item_dir, item.get_image_id_tail())
+    output_dir = os.path.join(full_item_dir, item.get_item_id_tail())
     image_path = os.path.join(output_dir, UNMODIFIED_FILE_NAME)
     if not os.path.exists(image_path):
         logger.warning("Image not found for item: %s, expected at: %s", item.name, image_path)

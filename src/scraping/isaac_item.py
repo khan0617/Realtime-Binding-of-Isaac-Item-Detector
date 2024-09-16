@@ -48,6 +48,6 @@ class IsaacItem:
         """Build an IsaacItem from the provided dictionary."""
         return cls(**d)
 
-    def get_image_id_tail(self) -> str:
+    def get_item_id_tail(self) -> str:
         """For an item ID like 5.100.145, return "145"."""
         return self.item_id.split(".")[-1]

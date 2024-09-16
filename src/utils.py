@@ -75,7 +75,7 @@ def get_isaac_item_from_yolo_class_id(yolo_class_id: str) -> IsaacItem:
     """Get the IsaacItem object corresponding to this yolo_class_id.
 
     Example: The "Forget Me Now" item has item_id="5.100.127" and yolo_class_id="24".
-    get_isaac_item_from__item_id_tail("24") will return IsaacItem(name="Forget Me Now", item_id="5.100.127", ...)
+    get_isaac_item_from_item_id_tail("24") will return IsaacItem(name="Forget Me Now", item_id="5.100.127", ...)
 
     Args:
         yolo_class_id (str): The yolo class id for an IsaacItem.

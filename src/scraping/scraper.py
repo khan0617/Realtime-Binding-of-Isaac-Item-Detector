@@ -197,7 +197,7 @@ def _download_item_image(isaac_item: IsaacItem, full_item_dir: str) -> None:
         full_item_dir (str): The full path for where items will be stored. Ex: "data/items/".
     """
     # define the directory and file path using the encoded name
-    this_item_data_dir = os.path.join(full_item_dir, isaac_item.get_image_id_tail())
+    this_item_data_dir = os.path.join(full_item_dir, isaac_item.get_item_id_tail())
     save_path = os.path.join(this_item_data_dir, UNMODIFIED_FILE_NAME)
 
     # make sure the destination directory exists
@@ -260,11 +260,11 @@ def dump_item_data_to_json(isaac_items: list[IsaacItem], filename: str) -> None:
         isaac_items (list[IsaacItem]): The IsaacItems to dump to the file.
         filename (str): Where to save the json file.
     """
-    isaac_items.sort(key=lambda x: int(x.get_image_id_tail()))
+    isaac_items.sort(key=lambda x: int(x.get_item_id_tail()))
     with open(filename, "w", encoding="utf-8") as f:
         data = {}
         for item in isaac_items:
-            item_id_tail = item.get_image_id_tail()
+            item_id_tail = item.get_item_id_tail()
             data[item_id_tail] = item.to_dict()
 
         json.dump(data, f, indent=4)

@@ -188,7 +188,7 @@ def get_detection_metadata(detection_results: list[list[DetectionResult]]) -> li
             detected_item_metadata.append(
                 {
                     "name": isaac_item.name,
-                    "img_url": f"/item_images/{isaac_item.get_image_id_tail()}",
+                    "img_url": f"/item_images/{isaac_item.get_item_id_tail()}",
                     "wiki_url": isaac_item.wiki_url,
                     "description": isaac_item.description,
                     "confidence": single_result.confidence,
