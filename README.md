@@ -20,8 +20,8 @@ Run this in your desired folder in the terminal: `git clone https://github.com/k
     - All actions going forward assume your conda environment is being used to run these commands
 
 ### 3. Install Project Dependencies
-Run either command in the root of the project, an example path is provided below:
-1. recommended: `C:\<your-clone-path-here>\realtime-binding-of-isaac-item-detector> pip install -e`
+Run either command in the root of the project, an example path is provided below (only run the command to the right of the `>`):
+1. recommended: `C:\<your-clone-path-here>\realtime-binding-of-isaac-item-detector> pip install -e .`
 2. alternative: `C:\<your-clone-path-here>\realtime-binding-of-isaac-item-detector> pip install -r requirements.txt`
 
 ### 4. Run the system
@@ -56,7 +56,7 @@ Transformations can be composed of sets of augmentations to apply to an image, s
 The final dataset used for training ended up having 94332 training images, 11791 validation images, and 11793 test images, for an 80-10-10 train-val-test split.
 
 # Training
-I selected a YOLOv8 model from Ultralytics and trained it for 40 epochs across the data. Each epoch took about 20 minutes, it was a bit over 30 hours of training on an RTX 4090 GPU over multiple sessions, not all at once.
+I selected a YOLOv8 model from Ultralytics and trained it for 100 epochs across the data. Each epoch took about 20 minutes, it was a bit over 30 hours of training on an RTX 4090 GPU over multiple sessions, not all at once.
 
 You can see the per-epoch losses below as training progressed:
 ![Training loss](./model_training_results/results.png)
