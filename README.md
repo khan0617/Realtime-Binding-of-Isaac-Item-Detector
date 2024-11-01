@@ -3,7 +3,7 @@ Ever played the Binding of Isaac and didn't know what a new item does? Feel like
 
 ![Demo](./readme_materials/isaac_gif.gif)
 
-See the full-res video ![here](./readme_materials/isaac_item_detector_video.mp4)
+See the full-res video [here](./readme_materials/isaac_item_detector_video.mp4) (you may need to download it and view the mp4 if github can't display it).
 
 # Prerequisites
 - This system is (unfortunately) only supported on Windows, due to the way the game window is obtained using the Win32 API
