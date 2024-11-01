@@ -3,6 +3,8 @@ Ever played the Binding of Isaac and didn't know what a new item does? Feel like
 
 ![Demo](./readme_materials/isaac_gif.gif)
 
+See the full-res video ![here](./readme_materials/isaac_item_detector_video.mp4)
+
 # Prerequisites
 - This system is (unfortunately) only supported on Windows, due to the way the game window is obtained using the Win32 API
 - You'll also need a copy of the Binding of Isaac (all DLC up to Repentance is recommended, that's what I used)
